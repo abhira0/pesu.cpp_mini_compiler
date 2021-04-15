@@ -1,2 +1,2 @@
-# cpp_mini_compiler
- 
+# cppminicompiler
+ A mini compiler for c++ language
