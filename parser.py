@@ -5,7 +5,8 @@ import tokrules
 from tokrules import tokens
 import argparse
 
-cached_input = """int a;
+cached_input = """
+int              a;
 /*
 fgrhjfbkjnij
 djvhgdhjbfdhb \n \n 563e
@@ -18,7 +19,7 @@ switch (a){
 case 4: int y; int po;break;
 default: float sfas;
 // haha
-
+{}
 }
 }
 """
