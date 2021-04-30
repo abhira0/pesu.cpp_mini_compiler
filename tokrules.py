@@ -1,33 +1,32 @@
 # Reserved words
 reserved = (
-    ("AUTO", "BREAK", "CASE", "CHAR", "CONST", "CONTINUE", "DEFAULT", "DO")
-    + ("DOUBLE", "ELSE", "ENUM" "EXTERN", "FLOAT", "FOR", "GOTO", "IF")
-    + ("INT", "LONG", "REGISTER", "RETURN", "SHORT", "SIGNED", "SIZEOF", "STATIC")
-    + ("STRUCT", "SWITCH", "TYPEDEF", "UNION", "UNSIGNED", "VOID", "VOLATILE", "WHILE")
-    + ("PRINTF", "COUT")
+    ("AUTO", "BREAK", "CASE", "CHAR", "CONST", "CONTINUE", "DEFAULT", "DO", "DOUBLE")
+    + ("ELSE", "ENUM", "EXTERN", "FLOAT", "FOR", "GOTO", "IF", "INT", "LONG")
+    + ("REGISTER", "RETURN", "SHORT", "SIGNED", "SIZEOF", "STATIC", "STRUCT", "SWITCH")
+    + ("TYPEDEF", "UNION", "UNSIGNED", "VOID", "VOLATILE", "WHILE", "PRINTF")
 )
 
-reserved_map = {}
-for r in reserved:
-    reserved_map[r.lower()] = r
 tokens = (
     reserved
-    # literals
+    # Literals
     + ("ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST")
+    # Operators (+, -, *, /, %, |, &, ~, ^, <<)
     + ("PLUS", "MINUS", "TIMES", "DIVIDE", "MOD", "OR", "AND", "NOT", "XOR", "LSHIFT")
-    # Operators
+    # Operators (>>, ||, &&, !, <, <=, >, >=, ==, !=)
     + ("RSHIFT", "LOR", "LAND", "LNOT", "LT", "LE", "GT", "GE", "EQ", "NE")
-    # Assignment
+    # Assignment (=, *=, /=, %=, +=, -=)
     + ("EQUALS", "TIMESEQUAL", "DIVEQUAL", "MODEQUAL", "PLUSEQUAL", "MINUSEQUAL")
+    # Assignment (-=, <<=, >>=, &=, ^=, |=)
     + ("LSHIFTEQUAL", "RSHIFTEQUAL", "ANDEQUAL", "XOREQUAL", "OREQUAL")
-    # Increment/decrement
+    # Increment/decrement (++, --)
     + ("PLUSPLUS", "MINUSMINUS")
-    # Structure dereference
+    # Structure dereference (->)
     + ("ARROW",)
-    # Conditional operator
+    # Conditional operator (?)
     + ("CONDOP",)
-    # Delimeters
+    # Delimeters ( ) [ ] { } , . ; :
     + ("LPAREN", "RPAREN", "LBRACKET", "RBRACKET", "LBRACE", "RBRACE")
+    # Delimeters , . ; :
     + ("COMMA", "PERIOD", "SEMI", "COLON")
     # Ellipsis (...)
     + ("ELLIPSIS",)
@@ -35,18 +34,6 @@ tokens = (
 
 # A string containing ignored characters (spaces and tabs)
 t_ignore = " \t\x0c"
-
-
-# Comments
-def t_ignore_comment(t):
-    r"/\*(.|\n)*?\*/"
-    t.lexer.lineno += t.value.count("\n")
-    print("-" * 50)
-
-
-def t_ignore_single_line_comment(t):
-    r"//.*"
-    t.lexer.lineno += t.value.count("\n")
 
 
 # Operators
@@ -72,7 +59,6 @@ t_EQ = r"=="
 t_NE = r"!="
 
 # Assignment operators
-
 t_EQUALS = r"="
 t_TIMESEQUAL = r"\*="
 t_DIVEQUAL = r"/="
@@ -85,14 +71,14 @@ t_ANDEQUAL = r"&="
 t_OREQUAL = r"\|="
 t_XOREQUAL = r"\^="
 
-# Increment/decrement
+# Increment / Decrement
 t_PLUSPLUS = r"\+\+"
 t_MINUSMINUS = r"--"
 
-# ->
+# Structure dereference
 t_ARROW = r"->"
 
-# ?
+# Conditional Operator
 t_CONDOP = r"\?"
 
 # Delimeters
@@ -108,6 +94,12 @@ t_SEMI = r";"
 t_COLON = r":"
 t_ELLIPSIS = r"\.\.\."
 
+
+# Reserved words mappings
+reserved_map = {}
+for r in reserved:
+    reserved_map[r.lower()] = r
+
 # Integer literal
 t_ICONST = r"\d+([uU]|[lL]|[uU][lL]|[lL][uU])?"
 
@@ -121,6 +113,12 @@ t_SCONST = r"\"([^\\\n]|(\\.))*?\""
 t_CCONST = r"(L)?\'([^\\\n]|(\\.))*?\'"
 
 
+# Defining a rule so we can track line numbers
+def t_NEWLINE(t):
+    r"\n+"
+    t.lexer.lineno += t.value.count("\n")
+
+
 # Identifiers
 def t_ID(t):
     r"[A-Za-z_][\w_]*"
@@ -129,15 +127,27 @@ def t_ID(t):
     return t
 
 
-# Defining a rule so we can track line numbers
-def t_NEWLINE(t):
-    r"\n+"
+# Comments
+def t_comment(t):
+    r"/\*(.|\n)*?\*/"
     t.lexer.lineno += t.value.count("\n")
+
+
+def t_single_line_comment(t):
+    r"//.*"
+    t.lexer.lineno += t.value.count("\n")
+
+
+# Preprocessor directive (ignored)
+def t_preprocessor(t):
+    r"\#(.)*?\n"
+    t.lexer.lineno += 1
 
 
 # Error handling rule for lexer
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    illegal_char = t.value[0]
+    print(f"Illegal character '{illegal_char}'")
     t.lexer.skip(1)
 
 
