@@ -1,9 +1,10 @@
+import argparse
+import sys
+
 import ply.lex as lex
 import ply.yacc as yacc
-import sys
-import tokrules
-from tokrules import tokens
-import argparse
+
+from .tokrules import *
 
 cached_input = """
 int              a;
