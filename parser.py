@@ -6,14 +6,7 @@ from tokrules import tokens
 import argparse
 
 cached_input = """
-<<<<<<< Updated upstream
 int              a;
-=======
-<<<<<<< HEAD
-=======
-int              a;
->>>>>>> bfb6a2fe1da87b39ff4ef299ca7c44a737a22b73
->>>>>>> Stashed changes
 /*
 fgrhjfbkjnij
 djvhgdhjbfdhb \n \n 563e
@@ -27,11 +20,6 @@ switch (a){
 case 4: int y; int po;break;
 default: float sfas;
 // haha
-{}
-<<<<<<< Updated upstream
-=======
-}
->>>>>>> Stashed changes
 }
 }
 """
