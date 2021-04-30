@@ -1,3 +1,4 @@
+# Reserved words
 reserved = (
     ("AUTO", "BREAK", "CASE", "CHAR", "CONST", "CONTINUE", "DEFAULT", "DO")
     + ("DOUBLE", "ELSE", "ENUM" "EXTERN", "FLOAT", "FOR", "GOTO", "IF")
@@ -6,7 +7,6 @@ reserved = (
     + ("PRINTF", "COUT")
 )
 
-# Reserved words
 reserved_map = {}
 for r in reserved:
     reserved_map[r.lower()] = r
@@ -39,7 +39,7 @@ t_ignore = " \t\x0c"
 
 # Comments
 def t_ignore_comment(t):
-    r"(.)*/\*(.|\n)*?\*/"
+    r"/\*(.|\n)*?\*/"
     t.lexer.lineno += t.value.count("\n")
     print("-" * 50)
 

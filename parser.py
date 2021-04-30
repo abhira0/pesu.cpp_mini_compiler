@@ -6,13 +6,21 @@ from tokrules import tokens
 import argparse
 
 cached_input = """
+<<<<<<< Updated upstream
 int              a;
+=======
+<<<<<<< HEAD
+=======
+int              a;
+>>>>>>> bfb6a2fe1da87b39ff4ef299ca7c44a737a22b73
+>>>>>>> Stashed changes
 /*
 fgrhjfbkjnij
 djvhgdhjbfdhb \n \n 563e
 
 */
 int b;
+int a;
 a = 40;
 for( b = 50; c<10; c++) {
 switch (a){
@@ -20,6 +28,10 @@ case 4: int y; int po;break;
 default: float sfas;
 // haha
 {}
+<<<<<<< Updated upstream
+=======
+}
+>>>>>>> Stashed changes
 }
 }
 """
@@ -598,11 +610,6 @@ def p_factorid(p):
     factorid : ID
     """
     p[0] = p[1]
-
-
-def p_error(p):
-    if p:
-        print("Syntax error in input!\t Line no:", p.lineno)
 
 
 def p_error(p):
