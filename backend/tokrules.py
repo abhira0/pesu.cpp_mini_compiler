@@ -6,6 +6,7 @@ reserved = (
     + ("TYPEDEF", "UNION", "UNSIGNED", "VOID", "VOLATILE", "WHILE", "PRINTF")
 )
 
+# List of token names. This is always required
 tokens = (
     reserved
     # Literals
@@ -31,10 +32,11 @@ tokens = (
     # Ellipsis (...)
     + ("ELLIPSIS",)
 )
-
+""" ---------------------------------------------------------------------
+    |   Regular expression rules for simple tokens
+    --------------------------------------------------------------------- """
 # A string containing ignored characters (spaces and tabs)
 t_ignore = " \t\x0c"
-
 
 # Operators
 t_PLUS = r"\+"
@@ -112,6 +114,9 @@ t_SCONST = r"\"([^\\\n]|(\\.))*?\""
 # Character constant 'c' or L'c'
 t_CCONST = r"(L)?\'([^\\\n]|(\\.))*?\'"
 
+""" ---------------------------------------------------------------------
+    |   Regular expression rule with some action code
+    --------------------------------------------------------------------- """
 
 # Defining a rule so we can track line numbers
 def t_NEWLINE(t):
@@ -133,6 +138,7 @@ def t_comment(t):
     t.lexer.lineno += t.value.count("\n")
 
 
+# Single Line Comments
 def t_single_line_comment(t):
     r"//.*"
     t.lexer.lineno += t.value.count("\n")
@@ -149,9 +155,3 @@ def t_error(t):
     illegal_char = t.value[0]
     print(f"Illegal character '{illegal_char}'")
     t.lexer.skip(1)
-
-
-# Preprocessor directive (ignored)
-def t_preprocessor(t):
-    r"\#(.)*?\n"
-    t.lexer.lineno += 1
