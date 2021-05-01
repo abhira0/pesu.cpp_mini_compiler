@@ -1,15 +1,13 @@
 import ply.lex as lex
+import .0_tokrules as tokrules
 
-cached_code = r"""
+cached_code = """
 // dfvdfjvndns dvhjsk  \vdsvvdvh\nvdev
 int a;
 void b;
 
 """
-lexer = lex.lex()
+lexer = lex.lex(module=tokrules)
 lexer.input(cached_code)
-while True:
-    tok = lexer.token()
-    if not tok:
-        break
+for tok in lexer.token():
     print(tok)
