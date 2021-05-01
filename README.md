@@ -12,11 +12,11 @@ See the PLY documentation [here](https://ply.readthedocs.io/en/latest/ "PLY Docs
   * To get stdout on terminal: `python backend\_1_lexer.py`
 
 ### Regex
-* \\\\\n -> matches a implicit newline. 
+* \\\\\n -> matches a explicit newline. 
 ```python
 "Hello \n World"
 ```
-* \n -> matched a explicit newline
+* \n -> matched a implicit newline
 ```python
 "Hello
 World"
