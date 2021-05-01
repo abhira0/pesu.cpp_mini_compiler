@@ -1,3 +1,7 @@
+""" ---------------------------------------------------------------------
+    |   List of reserved words and tokens
+    --------------------------------------------------------------------- """
+
 # Reserved words
 reserved = (
     ("AUTO", "BREAK", "CASE", "CHAR", "CONST", "CONTINUE", "DEFAULT", "DO", "DOUBLE")
@@ -36,7 +40,7 @@ tokens = (
     |   Regular expression rules for simple tokens
     --------------------------------------------------------------------- """
 # A string containing ignored characters (spaces and tabs)
-t_ignore = " \t\x0c"
+t_ignore = " \t"
 
 # Operators
 t_PLUS = r"\+"
