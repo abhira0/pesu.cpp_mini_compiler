@@ -4,7 +4,7 @@ fgrhjfbkjnij
 djvhgdhjbfdhb \n \n 563e
 
 */
-int b;
+/*int b;
 a = 40;
 int jh;
 for( b = 50; c<10; c++) {
@@ -16,4 +16,4 @@ for( b = 50; c<10; c++) {
 		default: float sfas;
 		// haha
 	}
-}
+}*/
