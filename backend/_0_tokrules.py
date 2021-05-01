@@ -47,8 +47,26 @@ tokens = (
 
 * Python raw strings are used since they are the most convenient way to write 
 regular expression strings
+
 * The name following the t_ must exactly match one of the names supplied in tokens
 
+* The action function can modify the contents of the LexToken object as appropriate.
+However, when it is done, the resulting token should be returned. If no value is
+returned by the action function, the token is discarded and the next token read.
+
+* Internally, lex.py uses the re module to do its pattern matching. Patterns are 
+compiled using the re.VERBOSE flag which can be used to help readability. However, 
+be aware that unescaped whitespace is ignored and comments are allowed in this mode. 
+If your pattern involves whitespace, make sure you use \s. If you need to match 
+the # character, use [#]
+
+* When building the master regular expression, rules are added in the following order:
+1.  All tokens defined by functions are added in the same order as they appear in the 
+    lexer file.
+2.  Tokens defined by strings are added next by sorting them in order of decreasing 
+    regular expression length (longer expressions are added first).
+    
+*
 """
 # A string containing ignored characters (spaces and tabs)
 t_ignore = " \t"
