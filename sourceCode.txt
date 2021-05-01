@@ -1,8 +1,1 @@
-#include <iostream>
-using namespace std;
-
-int main() {
-  cout << "Hello World!";   return 0;
-}
-
-b = 1 + 2 *10/ 1;
+"No \n World"
