@@ -1,19 +1,9 @@
-int a;
-/*
-fgrhjfbkjnij
-djvhgdhjbfdhb \n \n 563e
+#include <iostream>
+using namespace std;
 
-*/
-int b;
-a = 40;
-int jh;
-for( b = 50; c<10; c++) {
-	/*for(jh = 50; jh<10; jh++) {
-		int y;
-	}*/
-	switch (a){
-		case 4: int y; int po;break;
-		default: float sfas;
-		// haha
-	}
+int main() {
+  cout << "Hello World!";
+  return 0;
 }
+
+1bodmas = 1 + 2 *10/ 1;

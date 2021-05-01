@@ -5,3 +5,5 @@ parsetab.py
 i.txt
 __pycache__
 help
+.vscode
+_1_lex_op.txt

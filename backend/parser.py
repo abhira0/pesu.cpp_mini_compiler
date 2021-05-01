@@ -6,7 +6,7 @@ import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import LexToken
 
-from .tokrules import *
+from tokrules import *
 
 cached_input = """
 int              a;
@@ -938,9 +938,17 @@ tokens_lines = list()
 
 def get_token_line():
     global tokens_lines
-    result = tokens_lines[0].strip()
-    tokens_lines = tokens_lines[1:]
-    return result
+    print(" ------------------------------------------------ 1st token lines ---------------------------------------------\n")
+    print(tokens_lines)
+    if tokens_lines != []:
+        result = tokens_lines[0].strip()
+        tokens_lines = tokens_lines[1:]
+        print(" ------------------------------------------------ 2nd token lines ---------------------------------------------\n")
+        print(tokens_lines)
+        print(" ------------------------------------------------------- done ------------------------------------------------ \n")
+        return result
+    else:
+        return tokens_lines
 
 
 pa2_tokens = []
