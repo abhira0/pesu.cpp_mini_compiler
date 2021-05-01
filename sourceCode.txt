@@ -1,12 +1,7 @@
 #include <iostream>
-using namespace std;
+usingsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadsvdvsafcafasfasfd namespace std;
 
 int main() {
   cout << "Hello World!";
   return 0;
 }
-
-/*
-
-
-vdsvdsvds
