@@ -11,6 +11,7 @@ reserved = (
 )
 
 # List of token names. This is always required
+# The tokens list is also used by the parser.py module to identify terminals.
 tokens = (
     reserved
     # Literals
@@ -38,7 +39,13 @@ tokens = (
 )
 """ ---------------------------------------------------------------------
     |   Regular expression rules for simple tokens
-    --------------------------------------------------------------------- """
+    --------------------------------------------------------------------- 
+
+* Python raw strings are used since they are the most convenient way to write 
+regular expression strings
+* The name following the t_ must exactly match one of the names supplied in tokens
+
+"""
 # A string containing ignored characters (spaces and tabs)
 t_ignore = " \t"
 
@@ -135,6 +142,10 @@ def t_ID(t):
     r"[A-Za-z_][\w_]*"
     # get() returns the value of the key if present. If not, return "ID"
     t.type = reserved_map.get(t.value, "ID")
+    if t.type == "ID":
+        if len(t.value) > 31:
+            print("ERROR: Identifier is longer than 31. Truncating it.")
+            t.value = t.value[:31]
     return t
 
 
@@ -147,7 +158,7 @@ def t_comment(t):
 # Comments
 def t_illegal_comment(t):
     r"/\*(.|\n)*?"
-    print(f"\n\tUnterminated comment found at line no. {t.lexer.lineno}\n")
+    print(f"WARNING: Unterminated comment found at line no. {t.lexer.lineno}")
     quit()
     t.lexer.lineno += t.value.count("\n")
 
