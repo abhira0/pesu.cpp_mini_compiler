@@ -25,53 +25,6 @@ default: float sfas;
 }
 """
 
-
-def terminal_parser():
-    argzparsi = argparse.ArgumentParser()
-    argzparsi.add_argument(
-        "-f", "--filename", help="path to the file containing the source code"
-    )
-    argzparsi.add_argument(
-        "-c",
-        "--cached",
-        help="Use the source code cached in variable inside the same program",
-        action="store_true",
-    )
-    return argzparsi.parse_args()
-
-
-def u_getSourceCode():
-    global cached_input
-    if args.cached:
-        if cached_input:
-            return cached_input
-        else:
-            print(f"[!] There is no cached source code inside the program")
-            print("\tPlease Edit the variable 'namedcached_input' ")
-    try:
-        filename = args.filename
-        print(f"[i] Going to get source code from {filename}")
-        file_h = open(filename, "r")
-        return file_h.read()
-    except:
-        print("[!] No file path mentioned")
-        exit(0)
-
-
-def u_getTokenList(lexer):
-    token_list = []
-    for tok in lexer:
-        flag = tok.type in ["ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST"]
-        tok_value = str(tok.value) if flag else str(tok.type).upper()
-        token_list.append((str(tok.lineno), str(tok.type), tok_value))
-    return token_list
-
-
-args = terminal_parser()
-lexer = lex.lex(module=tokrules)
-lexer.input(u_getSourceCode())
-token_list = u_getTokenList(lexer)
-print(f"[i] List of Tokens generated: {token_list}\n")
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
 
@@ -620,6 +573,15 @@ def get_token_line(token):
         return 2
 
 
+def u_getTokenList(lexer):
+    token_list = []
+    for tok in lexer:
+        flag = tok.type in ["ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST"]
+        tok_value = str(tok.value) if flag else str(tok.type).upper()
+        token_list.append((str(tok.lineno), str(tok.type), tok_value))
+    return token_list
+
+
 class PA2Lexer(object):
     def __init__(self, token_list) -> None:
         self.token_list = token_list
@@ -635,12 +597,3 @@ class PA2Lexer(object):
         tok.lineno = line
         tok.lexpos = 0
         return tok
-
-
-pa2lexer = PA2Lexer(token_list)
-
-parser = yacc.yacc()
-ast = yacc.parse(lexer=pa2lexer)
-print(ast)
-
-display_all_tables()
