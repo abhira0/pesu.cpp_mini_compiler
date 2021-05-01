@@ -28,10 +28,55 @@ default: float sfas;
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
 
+class ClassSymbolTable:
+    def __init__(self):
+        self.symbols = dict()
+
+    @staticmethod
+    def line(length=20):
+        print("-" * length)
+
+    def insert(self, var):
+        if var in self.symbols.keys():
+            # print(var,"Sym Tab: has already been declared")
+            pass
+        else:
+            # print("Inserting.......",var)
+            self.symbols[var] = {"name": var, "type": None, "value": None}
+
+    def display(self):
+        if len(self.symbols) == 0:
+            print("Empty table")
+            return
+
+        self.line(60)
+        print("\tID\tTYPE\t\tVALUE\t")
+
+        for key in self.symbols.keys():
+            print("\t", end="")
+            print(self.symbols[key]["name"], end="\t")
+            print(self.symbols[key]["type"], end="\t\t")
+            print(self.symbols[key]["value"])
+        print()
+
+    def update_val(self, var, new_val):
+        self.symbols[var]["value"] = new_val
+
+    def update_type(self, var, var_type):
+        if var_type == type(str()):
+            t = "CHAR"
+        elif var_type == type(int()):
+            t = "INT"
+        elif var_type == type(float()):
+            t = "FLOAT"
+        self.symbols[var]["type"] = t
+
+
 class Table:
     def __init__(self, name=""):
         self.variables = {}
         self.name = name
+        self.types = {"INT": type(int()), "FLOAT": type(float()), "CHAR": type(str())}
 
     @staticmethod
     def line(length=20):
@@ -40,13 +85,15 @@ class Table:
     def insert(self, var, var_type):
         # print("Inserting.......",var_type)
         if var in self.variables.keys():
-            print(var, "has already been declared")
+            print(var, "has already been declared in Line no.", id_map[var]["line_no"])
+            raise ValueError
         else:
             self.variables[var] = {
                 "name": var,
                 "type": "Default_type",
-                "value": 0,
+                "value": None,
                 "address": -1,
+                "lineno": id_map[var]["line_no"],
                 "code": 1,
             }  # 1->recently added, 0 otherwise
             self.variables[var]["address"] = hex(id(self.variables[var]["name"]))
@@ -59,41 +106,67 @@ class Table:
         self.line(60)
         print(f"\t\tTable for : {self.name} scope")
         self.line(60)
-        print("\tID\tTYPE\tVALUE\tADDRESS")
+        print("\tID\tTYPE\tVALUE\tADDRESS\t\tLINE_NO")
 
         for key in self.variables.keys():
             print("\t", end="")
             print(self.variables[key]["name"], end="\t")
             print(self.variables[key]["type"], end="\t")
             print(self.variables[key]["value"], end="\t")
-            print(self.variables[key]["address"])
+            print(self.variables[key]["address"], end="\t")
+            print(self.variables[key]["lineno"])
         print()
 
     def update_type(self, new_type):
         for key in self.variables.keys():
             if self.variables[key]["code"]:
                 self.variables[key]["type"] = new_type
+
+                if self.variables[key]["value"] != None and self.types[
+                    new_type
+                ] != type(self.variables[key]["value"]):
+                    print(
+                        f'Type of {key} does not match {self.variables[key]["value"]}!'
+                    )
+
                 self.variables[key]["code"] = 0
 
-                if new_type == "INT":
-                    self.variables[key]["value"] = 0
-                elif new_type == "CHAR":
-                    self.variables[key]["value"] = ""
-                elif new_type == "FLOAT":
-                    self.variables[key]["value"] = 0.0
+                if self.variables[key]["value"] == None:
+                    if new_type == "INT":
+                        self.variables[key]["value"] = 0
+                    elif new_type == "CHAR":
+                        self.variables[key]["value"] = ""
+                    elif new_type == "FLOAT":
+                        self.variables[key]["value"] = 0.0
 
     def update_val(self, var, new_val):
         try:
-            self.variables[var]["value"] = self.variables[new_val]["value"]
-        except:
-            if var not in self.variables.keys():
-                print(var, "not declared")
+            if not isDeclared(var):
+                displayNotDeclared(var)
             else:
-                self.variables[var]["value"] = new_val
+                if get_val(new_val) == None:
+                    raise Exception
+                else:
+                    set_val(var, get_val(new_val))
+        except Exception:
+            if not isDeclared(var):
+                displayNotDeclared(var)
+            else:
+                t = get_type(var)  # self.variables[var]['type']
+                if t != "Default_type" and self.types[t] != type(new_val):
+                    print(f"Type of {var} does not match {new_val}!")
+                set_val(var, new_val)
 
 
 tables = []
 stack = [Table("GLOBAL")]
+label_stack = ["l"]
+label_stack_no = [0]
+switch_expr = None
+cases_list = []
+SymbolTable = ClassSymbolTable()
+
+temp_var_no = 0
 
 
 def p_start(p):
