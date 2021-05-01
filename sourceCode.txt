@@ -1,8 +1,2 @@
-#include <iostream>
-using namespace std;
-
-int main() {
-  cout << "Hello World!";   return 0;
-}
-
-bodmas = 1 + 2 *10/ 1;
+"No 
+ World"

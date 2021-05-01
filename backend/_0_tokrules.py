@@ -1,3 +1,11 @@
+from ply.lex import TOKEN
+from termcolor import cprint
+
+
+def wprint(text):
+    cprint(text, "red")
+
+
 """
 All the token regex and rules are specified here.
 """
@@ -40,6 +48,8 @@ tokens = (
     + ("COMMA", "PERIOD", "SEMI", "COLON")
     # Ellipsis (...)
     + ("ELLIPSIS",)
+    # BRACKET []
+    + ("BRACKET",)
 )
 """ ---------------------------------------------------------------------
     |   Regular expression rules for simple tokens
@@ -47,8 +57,26 @@ tokens = (
 
 * Python raw strings are used since they are the most convenient way to write 
 regular expression strings
+
 * The name following the t_ must exactly match one of the names supplied in tokens
 
+* The action function can modify the contents of the LexToken object as appropriate.
+However, when it is done, the resulting token should be returned. If no value is
+returned by the action function, the token is discarded and the next token read.
+
+* Internally, lex.py uses the re module to do its pattern matching. Patterns are 
+compiled using the re.VERBOSE flag which can be used to help readability. However, 
+be aware that unescaped whitespace is ignored and comments are allowed in this mode. 
+If your pattern involves whitespace, make sure you use \s. If you need to match 
+the # character, use [#]
+
+* When building the master regular expression, rules are added in the following order:
+1.  All tokens defined by functions are added in the same order as they appear in the 
+    lexer file.
+2.  Tokens defined by strings are added next by sorting them in order of decreasing 
+    regular expression length (longer expressions are added first).
+    
+*
 """
 # A string containing ignored characters (spaces and tabs)
 t_ignore = " \t"
@@ -111,6 +139,8 @@ t_SEMI = r";"
 t_COLON = r":"
 t_ELLIPSIS = r"\.\.\."
 
+# BRACKET
+t_BRACKET = r"\[\]"
 
 # Reserved words mappings
 reserved_map = {}
@@ -136,56 +166,56 @@ t_CCONST = r"(L)?\'([^\\\n]|(\\.))*?\'"
     --------------------------------------------------------------------- """
 
 # Defining a rule so we can track line numbers
+@TOKEN(r"\n+")
 def t_NEWLINE(t):
-    r"\n+"
     t.lexer.lineno += t.value.count("\n")
 
 
 # Identifiers
+@TOKEN(r"[A-Za-z_][\w_]*")
 def t_ID(t):
-    r"[A-Za-z_][\w_]*"
     # get() returns the value of the key if present. If not, return "ID"
     t.type = reserved_map.get(t.value, "ID")
     if t.type == "ID":
         if len(t.value) > 31:
-            print("ERROR: Identifier is longer than 31. Truncating it.")
+            wprint("ERROR: Identifier is longer than 31. Truncating it.")
             t.value = t.value[:31]
     return t
 
 
 # Comments
+@TOKEN(r"/\*(.|\n)*?\*/")
 def t_comment(t):
-    r"/\*(.|\n)*?\*/"
     t.lexer.lineno += t.value.count("\n")
 
 
 # Comments
+@TOKEN(r"/\*(.|\n)*?")
 def t_illegal_comment(t):
-    r"/\*(.|\n)*?"
-    print(f"WARNING: Unterminated comment found at line no. {t.lexer.lineno}")
+    wprint(f"ERROR: Unterminated comment found at line no. {t.lexer.lineno}")
     quit()
     t.lexer.lineno += t.value.count("\n")
 
 
+@TOKEN(r"[\d]+[A-Za-z_][\w_]*")
 def t_illegal_ID(t):
-    r"[\d]+[A-Za-z_][\w_]*"
-    print(f"ERROR: ID must not begin with a number at line no. {t.lexer.lineno}")
+    wprint(f"ERROR: ID must not begin with a number at line no. {t.lexer.lineno}")
 
 
 # Single Line Comments
+@TOKEN(r"//.*")
 def t_single_line_comment(t):
-    r"//.*"
     t.lexer.lineno += t.value.count("\n")
 
 
 # Preprocessor directive (ignored)
+@TOKEN(r"\#(.)*?\n")
 def t_preprocessor(t):
-    r"\#(.)*?\n"
     t.lexer.lineno += 1
 
 
 # Error handling rule for lexer
 def t_error(t):
     illegal_char = t.value[0]
-    print(f"Illegal character '{illegal_char}'")
+    wprint(f"WARNING: Illegal character '{illegal_char}'")
     t.lexer.skip(1)
