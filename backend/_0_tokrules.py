@@ -104,7 +104,9 @@ t_ELLIPSIS = r"\.\.\."
 # Reserved words mappings
 reserved_map = {}
 for r in reserved:
-    reserved_map[r.lower()] = r  # Map the reserved word in the reserved tuple from upper case (used as token names) to lower case (used in language).
+    reserved_map[
+        r.lower()
+    ] = r  # Map the reserved word in the reserved tuple from upper case (used as token names) to lower case (used in language).
 
 # Integer literal
 t_ICONST = r"\d+([uU]|[lL]|[uU][lL]|[lL][uU])?"
@@ -139,6 +141,14 @@ def t_ID(t):
 # Comments
 def t_comment(t):
     r"/\*(.|\n)*?\*/"
+    t.lexer.lineno += t.value.count("\n")
+
+
+# Comments
+def t_illegal_comment(t):
+    r"/\*(.|\n)*?"
+    print(f"\n\tUnterminated comment found at line no. {t.lexer.lineno}\n")
+    quit()
     t.lexer.lineno += t.value.count("\n")
 
 
