@@ -1,18 +1,11 @@
 import ply.lex as lex
 import _0_tokrules as tokrules
 
-cached_code = r"""// dfvdfjvndns dvhjsk  \vdsvvdvh\nvdev
-int a;
-void b;
-
-"""
-
-
-file_code = open("../sourceCode.txt", "r").read()
-cached_code = file_code
-
+source_code_path = "../sourceCode.txt"
+file_code = open(source_code_path, "r").read()
 lexer = lex.lex(module=tokrules)
-lexer.input(cached_code)
+lexer.input(file_code)
 
+# Tokenize
 for tok in lexer:
     print(tok)
