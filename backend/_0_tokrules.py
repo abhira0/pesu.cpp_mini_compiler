@@ -164,8 +164,8 @@ def t_NEWLINE(t):
 
 
 # Identifiers
+@TOKEN(r"[A-Za-z_][\w_]*")
 def t_ID(t):
-    r"[A-Za-z_][\w_]*"
     # get() returns the value of the key if present. If not, return "ID"
     t.type = reserved_map.get(t.value, "ID")
     if t.type == "ID":
@@ -176,33 +176,32 @@ def t_ID(t):
 
 
 # Comments
+@TOKEN(r"/\*(.|\n)*?\*/")
 def t_comment(t):
-    r"/\*(.|\n)*?\*/"
     t.lexer.lineno += t.value.count("\n")
 
 
 # Comments
-def t_illegal_comment(t):
-    r"/\*(.|\n)*?"
+@TOKEN(r"/\*(.|\n)*?")
+def t_illegal_comment(t):  
     print(f"WARNING: Unterminated comment found at line no. {t.lexer.lineno}")
     quit()
     t.lexer.lineno += t.value.count("\n")
 
-
+@TOKEN(r"[\d]+[A-Za-z_][\w_]*")
 def t_illegal_ID(t):
-    r"[\d]+[A-Za-z_][\w_]*"
     print(f"ERROR: ID must not begin with a number at line no. {t.lexer.lineno}")
 
 
 # Single Line Comments
+@TOKEN(r"//.*")
 def t_single_line_comment(t):
-    r"//.*"
     t.lexer.lineno += t.value.count("\n")
 
 
 # Preprocessor directive (ignored)
+@TOKEN(r"\#(.)*?\n")
 def t_preprocessor(t):
-    r"\#(.)*?\n"
     t.lexer.lineno += 1
 
 
