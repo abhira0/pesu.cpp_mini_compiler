@@ -1,3 +1,7 @@
+"""
+All the token regex and rules are specified here.
+"""
+
 """ ---------------------------------------------------------------------
     |   List of reserved words and tokens
     --------------------------------------------------------------------- """
@@ -165,7 +169,7 @@ def t_illegal_comment(t):
 
 def t_illegal_ID(t):
     r"[\d]+[A-Za-z_][\w_]*"
-    print("ERROR: ID must not begin with a number")
+    print(f"ERROR: ID must not begin with a number at line no. {t.lexer.lineno}")
 
 
 # Single Line Comments
