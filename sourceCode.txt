@@ -5,4 +5,4 @@ int main() {
   cout << "Hello World!";   return 0;
 }
 
-bodmas = 1 + 2 *10/ 1;
+b = 1 + 2 *10/ 1;

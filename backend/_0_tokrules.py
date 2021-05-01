@@ -40,6 +40,8 @@ tokens = (
     + ("COMMA", "PERIOD", "SEMI", "COLON")
     # Ellipsis (...)
     + ("ELLIPSIS",)
+    # BRACKET []
+    + ("BRACKET",)
 )
 """ ---------------------------------------------------------------------
     |   Regular expression rules for simple tokens
@@ -129,6 +131,8 @@ t_SEMI = r";"
 t_COLON = r":"
 t_ELLIPSIS = r"\.\.\."
 
+# BRACKET
+t_BRACKET = r"\[\]"
 
 # Reserved words mappings
 reserved_map = {}

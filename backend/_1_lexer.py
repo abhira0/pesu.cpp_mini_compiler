@@ -8,6 +8,20 @@ except:
 lexer = lex.lex(module=tokrules)
 lexer.input(file_code)
 
+
+def getIfASCII(tok):
+    value = tok.value
+    if len(value) == 1 and tok.type not in [
+        "ID",
+        "RCONST",
+        "ICONST",
+        "FCONST",
+        "CCONST",
+    ]:
+        tok.value = ord(tok.value)
+    return tok
+
+
 # Tokenize
 for tok in lexer:
-    print(tok)
+    print(getIfASCII(tok))
