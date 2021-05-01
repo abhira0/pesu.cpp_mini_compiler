@@ -158,8 +158,8 @@ t_CCONST = r"(L)?\'([^\\\n]|(\\.))*?\'"
     --------------------------------------------------------------------- """
 
 # Defining a rule so we can track line numbers
+@TOKEN(r"\n+")
 def t_NEWLINE(t):
-    r"\n+"
     t.lexer.lineno += t.value.count("\n")
 
 
