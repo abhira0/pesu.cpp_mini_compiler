@@ -1,4 +1,10 @@
-from ply.lex import TOKEN 
+from ply.lex import TOKEN
+from termcolor import cprint
+
+
+def wprint(text):
+    cprint(text, "red")
+
 
 """
 All the token regex and rules are specified here.
@@ -172,7 +178,7 @@ def t_ID(t):
     t.type = reserved_map.get(t.value, "ID")
     if t.type == "ID":
         if len(t.value) > 31:
-            print("ERROR: Identifier is longer than 31. Truncating it.")
+            wprint("ERROR: Identifier is longer than 31. Truncating it.")
             t.value = t.value[:31]
     return t
 
@@ -186,14 +192,14 @@ def t_comment(t):
 # Comments
 @TOKEN(r"/\*(.|\n)*?")
 def t_illegal_comment(t):
-    print(f"WARNING: Unterminated comment found at line no. {t.lexer.lineno}")
+    wprint(f"ERROR: Unterminated comment found at line no. {t.lexer.lineno}")
     quit()
     t.lexer.lineno += t.value.count("\n")
 
 
 @TOKEN(r"[\d]+[A-Za-z_][\w_]*")
 def t_illegal_ID(t):
-    print(f"ERROR: ID must not begin with a number at line no. {t.lexer.lineno}")
+    wprint(f"ERROR: ID must not begin with a number at line no. {t.lexer.lineno}")
 
 
 # Single Line Comments
@@ -211,5 +217,5 @@ def t_preprocessor(t):
 # Error handling rule for lexer
 def t_error(t):
     illegal_char = t.value[0]
-    print(f"Illegal character '{illegal_char}'")
+    wprint(f"WARNING: Illegal character '{illegal_char}'")
     t.lexer.skip(1)
