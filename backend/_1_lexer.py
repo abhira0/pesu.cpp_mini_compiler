@@ -32,4 +32,4 @@ def find_column(input, token):
 
 # Tokenize
 for tok in lexer:
-    print(getIfASCII(tok), find_column(file_code, tok))
+    print(tok, find_column(file_code, tok), sep=", Column no: ")
