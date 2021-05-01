@@ -27,9 +27,12 @@ def getIfASCII(tok):
 #     token is a token instance
 def find_column(input, token):
     line_start = input.rfind("\n", 0, token.lexpos) + 1
-    return (token.lexpos - line_start) + 1
+    first_col = (token.lexpos - line_start) + 1
+    last_col = len(token.value) + first_col - 1
+    return (first_col, last_col)
 
 
 # Tokenize
 for tok in lexer:
-    print(tok, find_column(file_code, tok), sep=", Column no: ")
+    col_range = find_column(file_code, tok)
+    print(f"{tok}, Column Range: {col_range}")
