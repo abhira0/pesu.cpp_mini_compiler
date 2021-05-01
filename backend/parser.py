@@ -312,6 +312,620 @@ def p_for(p):
     tables[-1].name = "FOR"
 
 
+def p_start(p):
+    """
+    start : statement_list
+    """
+    p[0] = p[1]
+
+
+def p_while(p):
+    """
+    while :  WHILE gen_new_label new_tab LPAREN cond RPAREN LBRACE new_scope statement_list RBRACE delete_scope
+    """
+    p[0] = ("while", p[5], p[7], p[9], p[10])
+
+    tables[-1].name = "WHILE"
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
+    print_label()
+
+
+def p_new_scope(p):
+    """
+    new_scope : empty
+    """
+    stack.append(Table())
+    label_stack.append(label_stack[-1] + str(label_stack_no[-1]) + "_")
+    label_stack_no.append(0)
+
+    modify_id_map("push")
+
+
+def p_delete_scope(p):
+    """
+    delete_scope : empty
+    """
+    # print("Deleting scope table")
+
+    tables.append(stack.pop())
+    label_stack.pop()
+    label_stack_no.pop()
+
+    modify_id_map("pop")
+
+
+def p_if(p):
+    """
+    if : IF new_tab LPAREN cond RPAREN LBRACE new_scope statement_list RBRACE delete_scope optional
+    """
+    p[0] = ("if", p[4], p[6], p[8], p[9])
+    # tables[-1].name = 'IF'
+
+    print_label()
+
+
+def p_new_tab(p):
+    """
+    new_tab : empty
+    """
+    p[0] = p[1]
+    print("\t", end="")
+
+
+def p_optional_1(p):
+    """
+    optional : empty
+    """
+    p[0] = p[1]
+
+
+def p_optional(p):
+    """
+    optional : ELSE gen_goto gen_new_label LBRACE new_scope statement_list RBRACE delete_scope
+    """
+    p[0] = ("else", p[4], p[6], p[7])
+    # tables[-1].name = 'ELSE'
+
+
+def p_gen_goto(p):
+    """
+    gen_goto : empty
+    """
+    goto(label_stack[-1] + str(label_stack_no[-1] + 1))
+
+
+def p_gen_new_label(p):
+    """
+    gen_new_label : empty
+    """
+    p[0] = p[1]
+    print_label()
+
+
+def p_switch(p):
+    """
+    switch : SWITCH LPAREN switch_expr RPAREN LBRACE labeled_statement_list RBRACE
+    """
+    p[0] = ("switch", p[3], p[5], p[6], p[7])
+    print("l_comparisons:")
+    # print cases here
+    for case in cases_list:
+        if case[0] == "case":
+            try:
+                temp = id_map[switch_expr]["scope"][-1] - 1
+                print(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}")
+            except:
+                print(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}")
+        else:
+            goto(f"{case[1]}")
+    print("l_next_switch:")
+
+
+def p_switch_expr(p):
+    """
+    switch_expr : ID
+                    | ICONST
+    """
+    p[0] = p[1]
+
+    global switch_expr
+    if isDeclared(p[1][0]):
+        switch_expr = p[1][0]
+    else:
+        displayNotDeclared(f"{p[1][0]}")
+
+    goto("l_comparisons")
+
+
+def p_labeled_statement_list(p):
+    """
+    labeled_statement_list : labeled_statement labeled_statement_list
+    """
+    p[0] = (p[1], p[2])
+
+
+def p_labeled_statement_list_1(p):
+    """
+    labeled_statement_list : empty
+    """
+    p[0] = p[1]
+
+
+def p_labeled_statement(p):
+    """
+    labeled_statement : CASE gen_new_label const_expr COLON new_scope statement_list delete_scope
+    """
+    p[0] = ("case", p[2], p[5])
+    temp = label_stack_no[-1] - 1
+    cases_list.append(("case", p[3], f"{label_stack[-1]}{temp}"))
+
+
+def p_labeled_statement_1(p):
+    """
+    labeled_statement :  DEFAULT COLON gen_new_label new_scope statement_list delete_scope
+    """
+    p[0] = ("default", p[5])
+    temp = label_stack_no[-1] - 1
+    cases_list.append(("default", f"{label_stack[-1]}{temp}"))
+    goto("l_next_switch")
+
+
+def p_labeled_statement_3(p):
+    """
+    labeled_statement :  labeled_statement BREAK SEMI
+    """
+    p[0] = ("labeled_statement", p[1], p[3])
+    goto("l_next_switch")
+
+
+def p_const_expr(p):
+    """
+    const_expr : ICONST
+                            | CCONST
+    """
+    p[0] = p[1]
+
+
+def p_statement_list(p):
+    """
+    statement_list : statement statement_list
+    """
+    p[0] = (p[1], p[2])  # Doubtful about this
+
+
+def p_statement_list_1(p):
+    """
+    statement_list : empty
+    """
+    p[0] = p[1]
+
+
+def p_statement_5(p):
+    """
+    statement : unary
+                            | assign
+                            | declaration
+                            | while
+                            | if
+                            | switch
+    """
+    p[0] = p[1]
+
+
+def p_empty(p):
+    "empty :"
+    ...
+
+
+def p_assign(p):
+    """
+    assign : ID EQUALS expr SEMI
+    """
+    p[0] = ("EXPRESSION CALCULATED", "=", p[1], p[3])
+
+    if not isDeclared(p[1]):
+        displayNotDeclared(p[1])
+
+    if type(p[3]) == tuple:
+        assign(p[1], p[3][0])
+        stack[-1].update_val(p[1], _get_value(p[3][0]))
+    elif p[3] not in id_map:
+        assign(p[1], "t" + str(p[3]))
+    else:
+        assign(p[1], p[3])
+
+
+def p_assign_1(p):
+    """
+    assign : ID EQUALS CCONST SEMI
+    """
+    p[0] = (p[1], p[3])
+
+    if not isDeclared(p[1]):
+        displayNotDeclared(p[1])
+    else:
+        assign(p[1], p[3])
+        stack[-1].update_val(p[1], _get_value(p[3]))
+
+
+def p_cond(p):
+    """
+    cond : ID LT ICONST
+            | ID LE ICONST
+            | ID GE ICONST
+            | ID GT ICONST
+            | ID LT ID
+            | ID LE ID
+            | ID GE ID
+            | ID GT ID
+            | ID NE ICONST
+            | ID NE ID
+            | ID NE FCONST
+            | ICONST NE ID
+            | ICONST NE ICONST
+            | ID LE FCONST
+            | ID GE FCONST
+            | ID GT FCONST
+            | ID LT FCONST
+            | ICONST LE ICONST
+            | ICONST GE ICONST
+            | ICONST GT ICONST
+            | ICONST LT ICONST
+            | FCONST LE FCONST
+            | FCONST GE FCONST
+            | FCONST GT FCONST
+            | FCONST LT FCONST
+            | ID EQ ID
+            | ID EQ ICONST
+            | ID EQ FCONST
+            | ICONST EQ ID
+            | FCONST EQ ID
+            | ICONST EQ ICONST
+            | FCONST EQ FCONST
+    """
+    if p[2] == "LE":
+        p[0] = ("CONDI", "<=", p[1], p[3])
+    elif p[2] == "LT":
+        p[0] = ("CONDI", "<", p[1], p[3])
+    elif p[2] == "GE":
+        p[0] = ("CONDI", ">=", p[1], p[3])
+    elif p[2] == "GT":
+        p[0] = ("CONDI", ">", p[1], p[3])
+    elif p[2] == "EQ":
+        p[0] = ("CONDI", "==", p[1], p[3])
+    elif p[2] == "NE":
+        p[0] = ("CONDI", "!=", p[1], p[3])
+
+    if p[1] in id_map:
+        if isDeclared(p[1]):
+            temp = id_map[p[1]]["scope"][-1] - 1
+            t1 = f"{p[1]}_{temp}"
+        else:
+            temp = "\b" * 8
+            displayNotDeclared(f"{p[1]}")
+    else:
+        t1 = p[1]
+
+    if p[3] in id_map:
+        if isDeclared(p[3]):
+            temp = id_map[p[3]]["scope"][-1] - 1
+            t2 = f"{p[3]}_{temp}"
+        else:
+            temp = "\b" * 8
+            print(f"{temp}")
+            displayNotDeclared(f"{p[3]}")
+    else:
+        t2 = p[3]
+
+    try:
+        print(
+            "%s\t%s\t%s\t%s" % (p[2], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
+        )
+        goto(label_stack[-1] + str(label_stack_no[-1] + 1))
+        print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+        label_stack_no[-1] += 1
+    except:
+        ...
+
+
+def p_cond_1(p):
+    """
+    cond : ID
+    """
+    p[0] = p[1]
+
+    if p[1] in id_map:
+        if isDeclared(p[1]):
+            temp = id_map[p[1]]["scope"][-1] - 1
+            t1 = f"{p[1]}_{temp}"
+        else:
+            temp = "\b" * 8
+            print(f"{temp}")
+            displayNotDeclared(f"{p[1]}")
+    else:
+        t1 = p[1]
+
+    try:
+        print("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]))
+        goto(label_stack[-1] + str(label_stack_no[-1] + 1))
+        print_label()
+    except:
+        ...
+
+
+def p_unary_pre(p):
+    """
+    unary : PLUSPLUS ID
+       | MINUSMINUS ID
+    """
+    if p[1] == "PLUSPLUS":
+        p[0] = ("PREINC", "++", p[2])
+    elif p[1] == "MINUSMINUS":
+        p[0] = ("PREDEC", "--", p[2])
+
+
+def p_unary_post(p):
+    """
+    unary : ID PLUSPLUS
+       | ID MINUSMINUS
+    """
+    if p[2] == "PLUSPLUS":
+        p[0] = ("POSTINC", "++", p[1])
+    elif p[2] == "MINUSMINUS":
+        p[0] = ("POSTDEC", "--", p[1])
+
+
+def p_declaration(p):
+    """
+    declaration : types vee SEMI
+                            | types arr SEMI
+    """
+    p[0] = (p[2], p[1])
+    # Update the types of the above declared variables
+    stack[-1].update_type(p[1])
+
+
+def p_types(p):
+    """
+    types : INT
+            | FLOAT
+            | DOUBLE
+            | CHAR
+            | LONG
+            | REGISTER
+    """
+    p[0] = p[1]
+
+
+def p_vee_2(p):
+    """
+    vee : vee COMMA vee
+    """
+    p[0] = (p[1], ",", p[3])
+
+
+def p_vee_1(p):
+    """
+    vee : ID
+    """
+    p[0] = p[1]
+
+    try:
+        stack[-1].insert(p[1], "")
+        decl_var(p[1])
+
+    except Exception:
+        ...
+
+
+def p_vee_4(p):
+    """
+    vee : init
+    """
+    p[0] = p[1]
+
+
+def p_init_1(p):
+    """
+    init : ID EQUALS expr
+    """
+    p[0] = ("EXPRESSSION CALCULATED", "=", p[1], p[3])
+
+    try:
+        stack[-1].insert(p[1], "")
+        decl_var(p[1])
+        if type(p[3]) == tuple:
+            assign(p[1], p[3][0])
+            stack[-1].update_val(p[1], _get_value(p[3][0]))
+        elif p[3] not in id_map:
+            assign(p[1], "t" + str(p[3]))
+        else:
+            if isDeclared(p[3]):
+                assign(p[1], p[3])
+            else:
+                displayNotDeclared(p[3])
+    except Exception:
+        print("Caught exception")
+
+
+def p_init(p):
+    """
+    init : ID EQUALS CCONST
+    """
+    p[0] = ("=", p[1], p[3])
+
+    try:
+        stack[-1].insert(p[1], "")
+        stack[-1].update_val(p[1], _get_value(p[3]))
+        decl_var(p[1])
+        assign(p[1], p[3])
+    except Exception:
+        ...
+
+
+def p_arr(p):
+    """
+    arr : ID open_bracket
+    """
+    p[0] = p[1]
+    try:
+        stack[-1].insert(p[1], "")
+
+        decl_var(p[1])
+    except:
+        ...
+
+
+def p_open_bracket(p):
+    """
+    open_bracket : LBRACKET ICONST RBRACKET
+                            | LBRACKET ICONST RBRACKET open_bracket
+    """
+
+    try:
+        p[0] = (p[1], p[2], p[3], p[4])
+    except:
+        p[0] = (p[1], p[2], p[3])
+
+
+def p_expr(p):
+    """
+    expr : expr PLUS term
+            | expr MINUS term
+    """
+    global temp_var_no
+
+    if type(p[1]) == type((1,)):  # ICONST or FCONST
+        t1 = decl_temp(p[1][0], p[1][1])
+        t1 = f"t{t1}"
+    elif p[1] in id_map:  # ID
+        if isDeclared(p[1]):
+            temp = id_map[p[1]]["scope"][-1] - 1
+            t1 = f"{p[1]}_{temp}"
+        else:
+            displayNotDeclared(p[1])
+    else:
+        t1 = f"t{p[1]}"
+
+    if type(p[3]) == tuple:
+        t2 = decl_temp(p[3][0], p[3][1])
+        t2 = f"t{t2}"
+    elif p[3] in id_map:
+        if isDeclared(p[3]):
+            temp = id_map[p[3]]["scope"][-1] - 1
+            t2 = f"{p[3]}_{temp}"
+        else:
+            displayNotDeclared(p[3])
+    else:
+        t2 = f"t{p[3]}"
+
+    try:
+        if p[2] == "PLUS":
+            decl_var(f"t{temp_var_no}")
+            print(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}")
+            temp_var_no += 1
+        elif p[2] == "MINUS":
+            decl_var(f"t{temp_var_no}")
+            print(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}")
+            temp_var_no += 1
+    except Exception:
+        ...
+
+    p[0] = str(temp_var_no - 1)
+
+
+def p_expr_1(p):
+    """
+    expr : term
+    """
+    p[0] = p[1]
+
+
+def p_term(p):
+    """
+    term : term TIMES factor
+            | term DIVIDE factor
+    """
+    global temp_var_no
+
+    p[0] = (p[1], p[3])
+    if type(p[1]) == type((1,)):  # ICONST or FCONST
+        t1 = decl_temp(p[1][0], p[1][1])
+        t1 = f"t{t1}"
+    elif p[1] in id_map:  # ID
+        temp = id_map[p[1]]["scope"][-1] - 1
+        t1 = f"{p[1]}_{temp}"
+    else:
+        t1 = f"t{p[1]}"
+
+    if type(p[3]) == tuple:
+        t2 = decl_temp(p[3][0], p[3][1])
+        t2 = f"t{t2}"
+    elif p[3] in id_map:
+        temp = id_map[p[3]]["scope"][-1] - 1
+        t2 = f"{p[3]}_{temp}"
+    else:
+        t2 = f"t{p[3]}"
+
+    if p[2] == "TIMES":
+        decl_var(f"t{temp_var_no}")
+        print(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}")
+        temp_var_no += 1
+
+    elif p[2] == "DIVIDE":
+        decl_var(f"t{temp_var_no}")
+        print(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}")
+        temp_var_no += 1
+
+    p[0] = str(temp_var_no - 1)
+
+
+def p_term_1(p):
+    """
+    term : factor
+    """
+    p[0] = p[1]
+
+
+def p_factor(p):
+    """
+    factor : ID
+    """
+    p[0] = p[1]
+
+
+def p_factor_1(p):
+    """
+    factor : ICONST
+    """
+    p[0] = (p[1], "INT")
+
+
+def p_factor_2(p):
+    """
+    factor : FCONST
+    """
+    p[0] = (p[1], "FLOAT")
+
+
+def p_error(p):
+    if p:
+        print("Syntax error in input!\t Line no:", p.lineno)
+    else:
+        print("Syntax error in input!")
+        return
+    while True:
+        tok = parser.token()  # Get the next token
+        if (
+            not tok
+            or tok.type == "SEMI"
+            or tok.type == "RBRACE"
+            or tok.type == "RPAREN"
+        ):
+            break
+    parser.restart()
+
+
 def display_all_tables():
     tables.append(stack.pop())
     while len(tables) > 0:
@@ -319,34 +933,69 @@ def display_all_tables():
         t.display()
 
 
-def get_token_line(token):
-    if len(token) == 3:
-        return 3
-    elif len(token) == 2:
-        return 2
+tokens_lines = list()
 
 
-def u_getTokenList(lexer):
-    token_list = []
-    for tok in lexer:
-        flag = tok.type in ["ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST"]
-        tok_value = str(tok.value) if flag else str(tok.type).upper()
-        token_list.append((str(tok.lineno), str(tok.type), tok_value))
-    return token_list
+def get_token_line():
+    global tokens_lines
+    result = tokens_lines[0].strip()
+    tokens_lines = tokens_lines[1:]
+    return result
+
+
+pa2_tokens = []
 
 
 class PA2Lexer(object):
-    def __init__(self, token_list) -> None:
-        self.token_list = token_list
-
     def token(self):
-        if self.token_list == []:
+        global pa2_tokens
+        if pa2_tokens == []:
             return None
-        (line, token_type, lexeme) = self.token_list[0]
-        self.token_list = self.token_list[1:]
-        tok = lex.LexToken()
+        (lineno, token_type, lexeme) = pa2_tokens[0]
+        pa2_tokens = pa2_tokens[1:]
+        tok = LexToken()
         tok.type = token_type
         tok.value = lexeme
-        tok.lineno = line
+        tok.lineno = lineno
         tok.lexpos = 0
         return tok
+
+
+id_map = {}
+
+if __name__ == "__main__":
+
+    tokens_filename = sys.argv[1]
+    tokens_filehandle = open(tokens_filename, "r")
+    tokens_lines = tokens_filehandle.readlines()
+    tokens_filehandle.close()
+
+    while tokens_lines != []:
+        line_number = get_token_line()
+        token_type = get_token_line()
+        token_lexeme = token_type
+        if token_type in ["ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST"]:
+            token_lexeme = get_token_line()
+
+        if token_type == "ID" and token_lexeme not in id_map:
+            id_map[token_lexeme] = {
+                "line_no": line_number,
+                "scope": [0],
+                "version_no": 0,
+            }
+
+        pa2_tokens = pa2_tokens + [(line_number, token_type.upper(), token_lexeme)]
+    # print(pa2_tokens)
+
+    pa2lexer = PA2Lexer()
+
+    parser = yacc.yacc()
+    ast = yacc.parse(lexer=pa2lexer)
+    # print(ast)
+
+    # display_all_tables()
+    # SymbolTable.display()
+
+    with open("symbol_table.pkl", "wb") as f:
+        pickle.dump(SymbolTable, f)
+    # print("Done!")
