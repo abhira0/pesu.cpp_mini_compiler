@@ -159,20 +159,3 @@ def t_error(t):
     illegal_char = t.value[0]
     print(f"Illegal character '{illegal_char}'")
     t.lexer.skip(1)
-
-
-import ply.lex as lex
-
-cached_code = r"""
-// dfvdfjvndns dvhjsk  \vdsvvdvh\nvdev
-int a;
-void b;
-
-"""
-lexer = lex.lex()
-lexer.input(cached_code)
-while True:
-    tok = lexer.token()
-    if not tok:
-        break
-    print(tok)
