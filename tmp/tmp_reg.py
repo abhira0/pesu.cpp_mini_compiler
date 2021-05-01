@@ -1,5 +1,9 @@
 import re
 
-text = r""" 'Hello  World' """
-pattern = r"(\'([^\\\n]|(\\.))*?\')"
-print(re.findall(pattern, text)[0][0])
+try:
+    file_code = open("../sourceCode.txt", "r").read()
+except:
+    file_code = open("./sourceCode.txt", "r").read()
+
+pattern = r"(.*([\\\n]).*)"
+print(re.findall(pattern, file_code))
