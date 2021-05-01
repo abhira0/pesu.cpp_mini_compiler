@@ -1,8 +1,10 @@
 import argparse
+import pickle
 import sys
 
 import ply.lex as lex
 import ply.yacc as yacc
+from ply.lex import LexToken
 
 from .tokrules import *
 
@@ -167,6 +169,136 @@ cases_list = []
 SymbolTable = ClassSymbolTable()
 
 temp_var_no = 0
+
+
+def get_type(var):
+    i = len(stack) - 1
+    while i >= 0:
+        if var in stack[i].variables:
+            return stack[i].variables[var]["type"]
+        i -= 1
+
+
+def set_val(var, val):
+    i = len(stack) - 1
+    while i >= 0:
+        if var in stack[i].variables:
+            stack[i].variables[var]["value"] = val
+            break
+        i -= 1
+
+
+def get_val(var):
+    i = len(stack) - 1
+    while i >= 0:
+        if var in stack[i].variables:
+            return stack[i].variables[var]["value"]
+        i -= 1
+
+
+def _get_value(x):
+    try:
+        return int(x)
+    except:
+        ...
+
+    try:
+        return float(x)
+    except:
+        ...
+
+    return x
+
+
+def isDeclared(var):
+    if var not in id_map:
+        return True
+
+    i = len(stack) - 1
+    while i >= 0:
+        if var in stack[i].variables:
+            return True
+        i -= 1
+
+    return False
+
+
+def displayNotDeclared(var):
+    # print(f"{var} has not been declared. Line no. {id_map[var]['line_no']}")
+    print(f"{var} has not been declared. ")
+
+
+def print_label():
+    global label_stack
+    global label_stack_no
+    print(f"{label_stack[-1]}{label_stack_no[-1]}:")
+    label_stack_no[-1] += 1
+
+
+def goto(label, _print=True):
+    s = f"\tGOTO\t\t\t{label}"
+    if _print:
+        print(s)
+    return s
+
+
+def assign(dst, rs, _print=True):
+    s = ""
+    # variable not in id_map => variable is a temp variable
+    if rs not in id_map and dst not in id_map:
+        s += f"\tASSIGN\t{rs}\t\t{dst}"
+        SymbolTable.insert(dst)
+    elif rs in id_map and dst not in id_map:
+        temp = id_map[rs]["scope"][-1] - 1
+        s += f"\tASSIGN\t{rs}_{temp}\t\t{dst}"
+        SymbolTable.insert(dst)
+    elif rs not in id_map and dst in id_map:
+        s += f"\tASSIGN\t{rs}\t\t{dst}_{id_map[dst]['version_no']}"
+        SymbolTable.insert(f"{dst}_{id_map[dst]['version_no']}")
+        id_map[dst]["version_no"] += 1
+        id_map[dst]["scope"][-1] = id_map[dst]["version_no"]
+    else:
+        temp = id_map[rs]["scope"][-1] - 1
+        s += f"\tASSIGN\t{rs}_{temp}\t\t{dst}_{id_map[dst]['version_no']}"
+        SymbolTable.insert(
+            f"{dst}_{id_map[dst]['version_no']}"
+        )  # Should I update the value?
+        id_map[dst]["version_no"] += 1
+        id_map[dst]["scope"][-1] = id_map[dst]["version_no"]
+
+    if _print:
+        print(s)
+    return s
+
+
+def decl_var(var, _print=True):
+    s = ""
+    if var in id_map:
+        s += f"\tVAR\t\t\t{var}"
+    else:
+        SymbolTable.insert(var)
+
+    if _print and len(s) > 0:
+        print(s)
+    return s
+
+
+def decl_temp(val, val_type):
+    global temp_var_no
+    decl_var("t" + str(temp_var_no))
+    assign("t" + str(temp_var_no), val)
+    t = temp_var_no
+    temp_var_no += 1
+    return t
+
+
+def modify_id_map(op):
+    if op == "push":
+        for i in id_map:
+            id_map[i]["scope"].append(id_map[i]["version_no"])
+    else:
+        for i in id_map:
+            id_map[i]["scope"].pop()
 
 
 def p_start(p):
