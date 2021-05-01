@@ -183,10 +183,11 @@ def t_comment(t):
 
 # Comments
 @TOKEN(r"/\*(.|\n)*?")
-def t_illegal_comment(t):  
+def t_illegal_comment(t):
     print(f"WARNING: Unterminated comment found at line no. {t.lexer.lineno}")
     quit()
     t.lexer.lineno += t.value.count("\n")
+
 
 @TOKEN(r"[\d]+[A-Za-z_][\w_]*")
 def t_illegal_ID(t):
