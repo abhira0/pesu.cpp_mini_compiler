@@ -163,6 +163,11 @@ def t_illegal_comment(t):
     t.lexer.lineno += t.value.count("\n")
 
 
+def t_illegal_ID(t):
+    r"[\d]+[A-Za-z_][\w_]*"
+    print("ERROR: ID must not begin with a number")
+
+
 # Single Line Comments
 def t_single_line_comment(t):
     r"//.*"

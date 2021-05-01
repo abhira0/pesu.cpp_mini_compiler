@@ -1,7 +1,9 @@
 #include <iostream>
-usingsaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadsvdvsafcafasfasfd namespace std;
+using namespace std;
 
 int main() {
   cout << "Hello World!";
   return 0;
 }
+
+1bodmas = 1 + 2 *10/ 1;
