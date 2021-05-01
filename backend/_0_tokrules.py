@@ -1,3 +1,5 @@
+from ply.lex import TOKEN 
+
 """
 All the token regex and rules are specified here.
 """
