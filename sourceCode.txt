@@ -1,3 +1,20 @@
 // dfvdfjvndns dvhjsk  \vdsvvdvh \n vdev
 int a;
-void b;
+/*
+fgrhjfbkjnij
+djvhgdhjbfdhb \n \n 563e
+
+*/
+/*int b;
+a = 40;
+int jh;
+for( b = 50; c<10; c++) {
+	/*for(jh = 50; jh<10; jh++) {
+		int y;
+	}*/
+	switch (a){
+		case 4: int y; int po;break;
+		default: float sfas;
+		// haha
+	}
+}*/

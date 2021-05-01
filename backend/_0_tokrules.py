@@ -104,7 +104,7 @@ t_ELLIPSIS = r"\.\.\."
 # Reserved words mappings
 reserved_map = {}
 for r in reserved:
-    reserved_map[r.lower()] = r
+    reserved_map[r.lower()] = r  # Map the reserved word in the reserved tuple from upper case (used as token names) to lower case (used in language).
 
 # Integer literal
 t_ICONST = r"\d+([uU]|[lL]|[uU][lL]|[lL][uU])?"
