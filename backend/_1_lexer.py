@@ -1,6 +1,8 @@
 import ply.lex as lex
 import _0_tokrules as tokrules
 
+from termcolor import cprint
+
 try:
     file_code = open("../sourceCode.txt", "r").read()
 except:
@@ -11,13 +13,8 @@ lexer.input(file_code)
 
 def getIfASCII(tok):
     value = tok.value
-    if len(value) == 1 and tok.type not in [
-        "ID",
-        "RCONST",
-        "ICONST",
-        "FCONST",
-        "CCONST",
-    ]:
+    disallowed_type = ["ID", "RCONST", "ICONST", "FCONST", "CCONST"]
+    if len(value) == 1 and tok.type not in disallowed_type:
         tok.value = ord(tok.value)
     return tok
 
@@ -35,4 +32,4 @@ def find_column(input, token):
 # Tokenize
 for tok in lexer:
     col_range = find_column(file_code, tok)
-    print(f"{tok}, Column Range: {col_range}")
+    cprint(f"{tok}, Column Range: {col_range}", "green")
