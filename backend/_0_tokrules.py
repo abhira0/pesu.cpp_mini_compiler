@@ -158,8 +158,6 @@ t_FCONST = r"((\d+)(\.\d+)([Ee](\+|-)?(\d+))? | (\d+)[Ee](\+|-)?(\d+))([lL]|[fF]
 # String literal
 t_SCONST = r"\"([^\\\n]|(\\.))*?\""
 
-# Character constant 'c' or L'c'
-t_CCONST = r"(L)?\'([^\\\n]|(\\.))*?\'"
 
 """ ---------------------------------------------------------------------
     |   Regular expression rule with some action code
@@ -180,6 +178,14 @@ def t_ID(t):
         if len(t.value) > 31:
             wprint("ERROR: Identifier is longer than 31. Truncating it.")
             t.value = t.value[:31]
+    return t
+
+
+# Character constant 'c' or L'c'
+@TOKEN(r"(L)?\'([^\\\n]|(\\.))*?\'")
+def t_char_coonst(t):
+    t.type = "CCONST"
+    t.value = t.value[1]
     return t
 
 
