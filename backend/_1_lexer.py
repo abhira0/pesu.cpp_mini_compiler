@@ -14,17 +14,21 @@ lexer.input(file_code)
 
 
 def getIfASCII(value_, type_):
-    disallowed_type = ["ID", "RCONST", "ICONST", "FCONST", "CCONST"]
+    disallowed_type = ["ID", "SCONST", "ICONST", "FCONST"]
     if len(value_) == 1 and type_ not in disallowed_type:
         value_ = ord(value_)
     return value_
 
 
 def getIfNumber(value_, type_):
-    allowed_type = ["ICONST", "FCONST", "CCONST"]
-    if len(value_) == 1 and type_ not in disallowed_type:
-        value_ = ord(value_)
-    return value_
+    try:
+        if type_ == "ICONST":
+            return int(value_)
+        if type_ == "FCONST":
+            return float(value_)
+        return value_
+    except:
+        return value_
 
 
 # Compute column.
@@ -42,6 +46,7 @@ token_json = {"items": []}
 for tok in lexer:
     col_range = find_column(file_code, tok)
     tok.value = getIfASCII(tok.value, tok.type)
+    tok.value = getIfNumber(tok.value, tok.type)
     json_item = [tok.type, tok.value, tok.lineno, tok.lexpos, col_range]
     cprint(f"{tok}, Column Range: {col_range}", "green")
     token_json["items"].append(json_item)
