@@ -26,9 +26,9 @@ def getIfNumber(value_, type_):
             return int(value_)
         if type_ == "FCONST":
             return float(value_)
-        return value_
     except:
-        return value_
+        ...
+    return value_
 
 
 # Compute column.

@@ -1,12 +1,14 @@
-int = 10;
-float = 3.1415E+3;
+int1 = 10000000000000000000000000000000000000000000000000;
+float1 = 3.1415E+3;
+char1 = 'd';
 
 
 /*#include <iostream>
 using namespace std;
 int main() {
 	for (int x=0; x<5; x=x+1) {
-		cout << "X is: " << x << endl;
+		cout << "X is: 
+        " << x << endl;
 	}
 	return 0;
 }*/
