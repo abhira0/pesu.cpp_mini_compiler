@@ -1,2 +1,12 @@
-"No \n
- World"
+int = 10;
+float = 3.1415E+3;
+
+
+/*#include <iostream>
+using namespace std;
+int main() {
+	for (int x=0; x<5; x=x+1) {
+		cout << "X is: " << x << endl;
+	}
+	return 0;
+}*/

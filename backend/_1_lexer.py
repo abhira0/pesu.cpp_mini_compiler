@@ -1,7 +1,9 @@
-import ply.lex as lex
-import _0_tokrules as tokrules
+import json
 
+import ply.lex as lex
 from termcolor import cprint
+
+import _0_tokrules as tokrules
 
 try:
     file_code = open("../sourceCode.txt", "r").read()
@@ -11,12 +13,22 @@ lexer = lex.lex(module=tokrules)
 lexer.input(file_code)
 
 
-def getIfASCII(tok):
-    value = tok.value
-    disallowed_type = ["ID", "RCONST", "ICONST", "FCONST", "CCONST"]
-    if len(value) == 1 and tok.type not in disallowed_type:
-        tok.value = ord(tok.value)
-    return tok
+def getIfASCII(value_, type_):
+    disallowed_type = ["ID", "SCONST", "ICONST", "FCONST"]
+    if len(value_) == 1 and type_ not in disallowed_type:
+        value_ = ord(value_)
+    return value_
+
+
+def getIfNumber(value_, type_):
+    try:
+        if type_ == "ICONST":
+            return int(value_)
+        if type_ == "FCONST":
+            return float(value_)
+        return value_
+    except:
+        return value_
 
 
 # Compute column.
@@ -29,7 +41,14 @@ def find_column(input, token):
     return (first_col, last_col)
 
 
+token_json = {"items": []}
 # Tokenize
 for tok in lexer:
     col_range = find_column(file_code, tok)
+    tok.value = getIfASCII(tok.value, tok.type)
+    tok.value = getIfNumber(tok.value, tok.type)
+    json_item = [tok.type, tok.value, tok.lineno, tok.lexpos, col_range]
     cprint(f"{tok}, Column Range: {col_range}", "green")
+    token_json["items"].append(json_item)
+with open("symbol_table.json", "w") as f:
+    json.dump(token_json, f)
