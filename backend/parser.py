@@ -969,7 +969,7 @@ class PA2Lexer(object):
         return tok
 
 
-id_map = {}
+id_map = {}  # To store the scope and version number 
 
 if __name__ == "__main__":
 

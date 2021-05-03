@@ -1,6 +1,5 @@
 import ply.lex as lex
 import _0_tokrules as tokrules
-
 from termcolor import cprint
 
 try:
