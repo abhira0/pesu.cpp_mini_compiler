@@ -8,25 +8,6 @@ from ply.lex import LexToken
 
 from tokrules import *
 
-cached_input = """
-int              a;
-/*
-fgrhjfbkjnij
-djvhgdhjbfdhb \n \n 563e
-
-*/
-int b;
-int a;
-a = 40;
-for( b = 50; c<10; c++) {
-switch (a){
-case 4: int y; int po;break;
-default: float sfas;
-// haha
-}
-}
-"""
-
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
 
@@ -301,15 +282,9 @@ def modify_id_map(op):
             id_map[i]["scope"].pop()
 
 
-def p_for(p):
-    """
-    for :  FOR LPAREN assign SEMI cond SEMI unary RPAREN LBRACE new_scope statement RBRACE
-    """
-    p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
-
-    print("Deleting scope table")
-    tables.append(stack.pop())
-    tables[-1].name = "FOR"
+""" ---------------------------------------------------------------------
+    |   Grammer Rules with actions
+    --------------------------------------------------------------------- """
 
 
 def p_start(p):
@@ -328,6 +303,17 @@ def p_while(p):
     tables[-1].name = "WHILE"
     goto(label_stack[-1] + str(label_stack_no[-1] - 2))
     print_label()
+
+
+def p_for(p):
+    """
+    for :  FOR LPAREN assign SEMI cond SEMI unary RPAREN LBRACE new_scope statement RBRACE
+    """
+    p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
+
+    print("Deleting scope table")
+    tables.append(stack.pop())
+    tables[-1].name = "FOR"
 
 
 def p_new_scope(p):
