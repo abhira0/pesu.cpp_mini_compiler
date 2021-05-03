@@ -1,9 +1,8 @@
+import ply.lex as lex
+import _0_tokrules as tokrules
 import json
-
 import ply.lex as lex
 from termcolor import cprint
-
-import _0_tokrules as tokrules
 
 try:
     file_code = open("../sourceCode.txt", "r").read()

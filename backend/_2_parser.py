@@ -940,7 +940,7 @@ class CustomLexer(object):
         return ret_var
 
 
-id_map = {}
+id_map = {}  # To store the scope and version number 
 
 if __name__ == "__main__":
     with open("./symbol_table.json") as f:
