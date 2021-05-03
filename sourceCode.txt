@@ -1,14 +1,25 @@
+#include <iostream>
+using namespace std;
+int main() {
+	int i;
+	i=10;
+	int j;
+	j=i;
+	switch(0)
+	{
+		case 0: int i; int j; j=i*i; j=j*j; break;
+		case 1: int k; break;
+		case 2: int z; z=12*20;
+		case 3: int y;
+		default: int y;
+	}
+	int k;
+	k = 100;
+
+}
+
+/*
 int1 = 10000000000000000000000000000000000000000000000000;
 float1 = 3.1415E+3;
 char1 = 'd';
-
-
-/*#include <iostream>
-using namespace std;
-int main() {
-	for (int x=0; x<5; x=x+1) {
-		cout << "X is: 
-        " << x << endl;
-	}
-	return 0;
-}*/
+*/
