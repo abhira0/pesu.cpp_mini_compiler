@@ -1,12 +1,12 @@
 import argparse
+import json
 import pickle
 import sys
 
 import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import LexToken
-
-from tokrules import *
+from _0_tokrules import *
 
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
@@ -919,78 +919,44 @@ def display_all_tables():
         t.display()
 
 
-tokens_lines = list()
+class CustomLexer(object):
+    def __init__(self):
+        self.var_token_gen = self.token_gen()
 
+    def token_gen(self):
+        for token in symbol_table["items"]:
+            lextoken_obj = LexToken()
+            lextoken_obj.type = token[0]
+            lextoken_obj.value = token[1]
+            lextoken_obj.lineno = token[2]
+            lextoken_obj.lexpos = token[3]
+            yield lextoken_obj
 
-def get_token_line():
-    global tokens_lines
-    print(
-        " ------------------------------------------------ 1st token lines ---------------------------------------------\n"
-    )
-    print(tokens_lines)
-    if tokens_lines != []:
-        result = tokens_lines[0].strip()
-        tokens_lines = tokens_lines[1:]
-        print(
-            " ------------------------------------------------ 2nd token lines ---------------------------------------------\n"
-        )
-        print(tokens_lines)
-        print(
-            " ------------------------------------------------------- done ------------------------------------------------ \n"
-        )
-        return result
-    else:
-        return tokens_lines
-
-
-pa2_tokens = []
-
-
-class PA2Lexer(object):
     def token(self):
-        global pa2_tokens
-        if pa2_tokens == []:
-            return None
-        (lineno, token_type, lexeme) = pa2_tokens[0]
-        pa2_tokens = pa2_tokens[1:]
-        tok = LexToken()
-        tok.type = token_type
-        tok.value = lexeme
-        tok.lineno = lineno
-        tok.lexpos = 0
-        return tok
+        try:
+            ret_var = next(self.var_token_gen)
+        except StopIteration:
+            ret_var = None
+        return ret_var
 
 
 id_map = {}
 
 if __name__ == "__main__":
-
-    tokens_filename = sys.argv[1]
-    tokens_filehandle = open(tokens_filename, "r")
-    tokens_lines = tokens_filehandle.readlines()
-    tokens_filehandle.close()
-
-    while tokens_lines != []:
-        line_number = get_token_line()
-        token_type = get_token_line()
-        token_lexeme = token_type
-        if token_type in ["ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST"]:
-            token_lexeme = get_token_line()
-
-        if token_type == "ID" and token_lexeme not in id_map:
+    with open("./symbol_table.json") as f:
+        symbol_table = json.load(f)
+    for token in symbol_table["items"]:
+        if token[0] == "ID" and token[1] not in id_map:
+            token_lexeme = token[1]
+            line_number = token[2]
             id_map[token_lexeme] = {
                 "line_no": line_number,
                 "scope": [0],
                 "version_no": 0,
             }
 
-        pa2_tokens = pa2_tokens + [(line_number, token_type.upper(), token_lexeme)]
-    # print(pa2_tokens)
-
-    pa2lexer = PA2Lexer()
-
     parser = yacc.yacc()
-    ast = yacc.parse(lexer=pa2lexer)
+    ast = yacc.parse(lexer=CustomLexer())
     # print(ast)
 
     # display_all_tables()
