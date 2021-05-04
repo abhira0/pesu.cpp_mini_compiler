@@ -5,9 +5,9 @@ import ply.lex as lex
 from termcolor import cprint
 
 try:
-    file_code = open("../test/switch.c", "r").read()
+    file_code = open("../test/forswitch.cpp", "r").read()
 except:
-    file_code = open("./test/switch.c", "r").read()
+    file_code = open("./test/forswitch.cpp", "r").read()
 lexer = lex.lex(module=tokrules)
 lexer.input(file_code)
 
