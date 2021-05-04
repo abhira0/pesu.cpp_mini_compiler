@@ -54,7 +54,14 @@ class ScopeTable:
     def __init__(self, name=""):
         self.variables = {}
         self.name = name
-        self.types = {"INT": type(int()), "FLOAT": type(float()), "CHAR": type(str())}
+        self.types = {
+            "INT": type(int()),
+            "FLOAT": type(float()),
+            "CHAR": type(str()),
+            "int": type(int()),
+            "float": type(float()),
+            "char": type(str()),
+        }
 
     def insert(self, var, var_type):
         if var in self.variables.keys():
@@ -220,7 +227,7 @@ def assign(dst, rs, verbose=True):
         )  # Should I update the value?
         idm.dikt[dst]["version_no"] += 1
         idm.dikt[dst]["scope"][-1] = idm.dikt[dst]["version_no"]
-    SymbolTable.display()
+    # SymbolTable.display()
 
     if verbose:
         print(s)
@@ -273,13 +280,20 @@ def p_while(p):
 
 def p_for(p):
     """
-    for :  FOR LPAREN assign SEMI cond SEMI unary RPAREN LBRACE new_scope statement RBRACE delete_scope
+    for :  FOR LPAREN new_scope statement gen_new_label cond SEMI unary RPAREN LBRACE statement cond_label RBRACE delete_scope
     """
     p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
 
     print("Deleting scope table")
     tables.append(stack.pop())
     tables[-1].name = "FOR"
+
+
+def p_cond_label(p):
+    """
+    cond_label : empty
+    """
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
 def p_new_scope(p):
@@ -457,7 +471,7 @@ def p_statement_5(p):
     statement : unary
                             | assign
                             | declaration
-                            | while
+                            | for
                             | if
                             | switch
     """
@@ -535,17 +549,18 @@ def p_cond(p):
             | ICONST EQ ICONST
             | FCONST EQ FCONST
     """
-    if p[2] == "LE":
+    sym_map = {"<=": "LE", "<": "LT", ">=": "GE", ">": "GT", "==": "EQ", "!=": "NE"}
+    if p[2] == "<=":
         p[0] = ("CONDI", "<=", p[1], p[3])
-    elif p[2] == "LT":
+    elif p[2] == "<":
         p[0] = ("CONDI", "<", p[1], p[3])
-    elif p[2] == "GE":
+    elif p[2] == ">=":
         p[0] = ("CONDI", ">=", p[1], p[3])
-    elif p[2] == "GT":
+    elif p[2] == ">":
         p[0] = ("CONDI", ">", p[1], p[3])
-    elif p[2] == "EQ":
+    elif p[2] == "==":
         p[0] = ("CONDI", "==", p[1], p[3])
-    elif p[2] == "NE":
+    elif p[2] == "!=":
         p[0] = ("CONDI", "!=", p[1], p[3])
 
     if p[1] in idm.dikt:
@@ -571,7 +586,8 @@ def p_cond(p):
 
     try:
         print(
-            "%s\t%s\t%s\t%s" % (p[2], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
+            "\t%s\t%s\t%s\t%s"
+            % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
         )
         goto(label_stack[-1] + str(label_stack_no[-1] + 1))
         print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
@@ -610,10 +626,12 @@ def p_unary_pre(p):
     unary : PLUSPLUS ID
        | MINUSMINUS ID
     """
-    if p[1] == "PLUSPLUS":
+    if p[1] == "++":
         p[0] = ("PREINC", "++", p[2])
-    elif p[1] == "MINUSMINUS":
+        print(f"\PREINC\t\t\t{p[2]}")
+    elif p[1] == "--":
         p[0] = ("PREDEC", "--", p[2])
+        print(f"\PREDEC\t\t\t{p[2]}")
 
 
 def p_unary_post(p):
@@ -621,10 +639,12 @@ def p_unary_post(p):
     unary : ID PLUSPLUS
        | ID MINUSMINUS
     """
-    if p[2] == "PLUSPLUS":
+    if p[2] == "++":
         p[0] = ("POSTINC", "++", p[1])
-    elif p[2] == "MINUSMINUS":
+        print(f"\tPOSTINC\t\t\t{p[1]}")
+    elif p[2] == "--":
         p[0] = ("POSTDEC", "--", p[1])
+        print(f"\tPOSTDEC\t\t\t{p[1]}")
 
 
 def p_declaration(p):

@@ -1,14 +1,5 @@
-int i,j,k;
 int i;
-i=0;
-k=6;
-while(i<k)
-{
-    char j,l,k;
-    float x,y;
-    k=i*i;
-    while(k<l)
-    {
-        int a,b;
-    }
+int k;
+for(i=0;i<10;i++){
+    k=10;
 }

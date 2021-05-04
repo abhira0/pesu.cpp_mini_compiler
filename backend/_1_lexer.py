@@ -44,8 +44,8 @@ token_json = {"items": []}
 # Tokenize
 for tok in lexer:
     col_range = find_column(file_code, tok)
-    tok.value = getIfASCII(tok.value, tok.type)
-    tok.value = getIfNumber(tok.value, tok.type)
+    # tok.value = getIfASCII(tok.value, tok.type)
+    # tok.value = getIfNumber(tok.value, tok.type)
     json_item = [tok.type, tok.value, tok.lineno, tok.lexpos, col_range]
     cprint(f"{tok}, Column Range: {col_range}", "green")
     token_json["items"].append(json_item)
