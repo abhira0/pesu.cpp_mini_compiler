@@ -263,25 +263,12 @@ def p_start(p):
     p[0] = p[4]
 
 
-def p_while(p):
-    """
-    while :  WHILE gen_new_label new_tab LPAREN cond RPAREN LBRACE new_scope statement_list RBRACE delete_scope
-    """
-    p[0] = ("while", p[5], p[7], p[9], p[10])
-
-    tables[-1].name = "WHILE"
-    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
-    print_label()
-
-
 def p_for(p):
     """
     for :  FOR LPAREN check_for new_scope statement gen_new_label cond SEMI unary RPAREN LBRACE gen_new_label statement_list cond_label RBRACE uncheck_for delete_scope
     """
     p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
 
-    print("Deleting scope table")
-    # tables.append(stack.pop())
     tables[-1].name = "FOR"
 
 
@@ -324,7 +311,6 @@ def p_delete_scope(p):
     """
     delete_scope : empty
     """
-    # print("Deleting scope table")
 
     tables.append(stack.pop())
     label_stack.pop()
@@ -333,44 +319,12 @@ def p_delete_scope(p):
     idm.modify("pop")
 
 
-def p_if(p):
-    """
-    if : IF new_tab LPAREN cond RPAREN LBRACE new_scope statement_list RBRACE delete_scope optional
-    """
-    p[0] = ("if", p[4], p[6], p[8], p[9])
-    # tables[-1].name = 'IF'
-
-    print_label()
-
-
 def p_new_tab(p):
     """
     new_tab : empty
     """
     p[0] = p[1]
     print("\t", end="")
-
-
-def p_optional_1(p):
-    """
-    optional : empty
-    """
-    p[0] = p[1]
-
-
-def p_optional(p):
-    """
-    optional : ELSE gen_goto gen_new_label LBRACE new_scope statement_list RBRACE delete_scope
-    """
-    p[0] = ("else", p[4], p[6], p[7])
-    # tables[-1].name = 'ELSE'
-
-
-def p_gen_goto(p):
-    """
-    gen_goto : empty
-    """
-    goto(label_stack[-1] + str(label_stack_no[-1] + 1))
 
 
 def p_gen_new_label(p):
@@ -485,7 +439,6 @@ def p_statement_5(p):
                             | assign
                             | declaration
                             | for
-                            | if
                             | switch
     """
     p[0] = p[1]
@@ -973,6 +926,8 @@ class IDMap:
         return f"IDMap Dictionary: {str(self.dikt)}"
 
 
+# import _1_lexer
+
 idm = IDMap()
 idm.dikt = {}
 if __name__ == "__main__":
@@ -983,4 +938,5 @@ if __name__ == "__main__":
             idm.new_id(token[1], token[2])
     parser = yacc.yacc()
     ast = yacc.parse(lexer=CustomLexer())
+
     print(ast)
