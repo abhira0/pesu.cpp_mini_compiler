@@ -19,7 +19,7 @@ reserved = (
     ("AUTO", "BREAK", "CASE", "CHAR", "CONST", "CONTINUE", "DEFAULT", "DO", "DOUBLE")
     + ("ELSE", "ENUM", "EXTERN", "FLOAT", "FOR", "GOTO", "IF", "INT", "LONG")
     + ("REGISTER", "RETURN", "SHORT", "SIGNED", "SIZEOF", "STATIC", "STRUCT", "SWITCH")
-    + ("TYPEDEF", "UNION", "UNSIGNED", "VOID", "VOLATILE", "WHILE", "PRINTF")
+    + ("TYPEDEF", "UNION", "UNSIGNED", "VOID", "VOLATILE", "WHILE", "PRINTF", "MAIN")
 )
 
 # List of token names. This is always required
