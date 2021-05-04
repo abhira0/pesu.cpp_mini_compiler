@@ -57,7 +57,7 @@ def update_element(elt, *, updated_val = None):
 		temp = SymbolTable.symbols[elt]['value']
 		return str(temp)
 	else:
-		temp = get_value(elt, SymbolTable)
+		temp = get_value(elt, SymbolTable)         # get value
 		return str(temp)
 
 def update_expressions(expr, value):
@@ -101,21 +101,25 @@ def get_value(x, SymbolTable):
 		return _get_value(x)
 
 if __name__ == '__main__':
-	SymbolTable = pickle.load(open('symbol_table.pkl', 'rb'))
-	f = open(sys.argv[1], 'r')
-
+	#SymbolTable = pickle.load(open('symbol_table.pkl', 'rb'))
+	with open("./symbol_table.json") as f:
+        symbol_table = json.load(f)
+	
 	tac = []
+	f = open(sys.argv[1], 'r')
 	for i in f:
 		x = i.strip().split('\t')
 		tac.append(x)
 
 	optimized_tac = []
+
 	for line in tac:
 		try:
 			if line[3][0] != 'l' and line[0] != 'VAR':
 				destinations.add(line[3])
 		except:
 			pass
+
 		instruction = line[0]									# [op	var1	var2	result] --> Quadraple Format
 		if instruction == 'VAR':
 			optimized_tac.append(line)
@@ -177,19 +181,26 @@ if __name__ == '__main__':
 				line[1] = update_element(line[1])
 				line[2] = update_element(line[2])
 				optimized_tac.append(line)
+
 		elif instruction[0] == 'l':
 			optimized_tac.append(line)
-		elif instruction in get_relops():
+
+		elif instruction in get_relops():		# relop		Var1	Var2	(=	a	b)
 			variable1 = line[1]
 			variable2 = line[2]
 			line[1] = update_element(line[1])
 			line[2] = update_element(line[2])
 			optimized_tac.append(line)
 
+			# for i in range(1,3):
+				# if type(_get_value(line[i])) == type(""):
+					# sources.add(line[i])
+
 			if type(_get_value(line[1])) == type(""):
 				sources.add(line[1])
 			if type(_get_value(line[2])) == type(""):
 				sources.add(line[2])
+
 		elif instruction == 'GOTO':
 			optimized_tac.append(line)
 
@@ -197,3 +208,10 @@ if __name__ == '__main__':
 	write_optimized_file(optimized_tac)
 
 	# SymbolTable.display()
+
+
+
+
+
+
+
