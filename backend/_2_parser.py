@@ -130,7 +130,7 @@ label_stack_no = [0]
 switch_expr = None
 cases_list = []
 SymbolTable = ClassSymbolTable()
-
+for_expr = False
 temp_var_no = 0
 
 
@@ -280,14 +280,29 @@ def p_while(p):
 
 def p_for(p):
     """
-    for :  FOR LPAREN new_scope statement gen_new_label cond SEMI unary RPAREN LBRACE statement cond_label RBRACE delete_scope
+    for :  FOR LPAREN check_for new_scope statement gen_new_label cond SEMI unary RPAREN LBRACE gen_new_label statement_list cond_label RBRACE uncheck_for delete_scope
     """
     p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
 
     print("Deleting scope table")
-    tables.append(stack.pop())
+    # tables.append(stack.pop())
     tables[-1].name = "FOR"
 
+def p_check_for(p):
+    """
+    check_for : empty
+    """
+    global for_expr
+    for_expr = True
+
+def p_uncheck_for(p):
+    """
+    uncheck_for : empty
+    """
+    global for_expr
+    for_expr = False
+    print_label()
+    
 
 def p_cond_label(p):
     """
@@ -370,7 +385,7 @@ def p_gen_new_label(p):
 
 def p_switch(p):
     """
-    switch : SWITCH LPAREN switch_expr RPAREN LBRACE labeled_statement_list RBRACE
+    switch : SWITCH LPAREN new_scope switch_expr RPAREN LBRACE labeled_statement_list RBRACE delete_scope
     """
     p[0] = ("switch", p[3], p[5], p[6], p[7])
     print("l_comparisons:")
@@ -585,13 +600,23 @@ def p_cond(p):
         t2 = p[3]
 
     try:
-        print(
-            "\t%s\t%s\t%s\t%s"
-            % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
-        )
-        goto(label_stack[-1] + str(label_stack_no[-1] + 1))
-        print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
-        label_stack_no[-1] += 1
+        global for_expr
+        if(for_expr == False):
+            print(
+                "\t%s\t%s\t%s\t%s"
+                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
+            )
+            goto(label_stack[-1] + str(label_stack_no[-1] + 1))
+            print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+            label_stack_no[-1] += 1
+        elif(for_expr == True):
+            print(
+                "\t%s\t%s\t%s\t%s"
+                % (sym_map[p[2]], t1, t2, label_stack[-1]+ str(label_stack_no[-1] + 1))
+            )
+            goto(label_stack[-1] + str(label_stack_no[-1] + 2))
+            print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+            label_stack_no[-1] += 1
     except:
         ...
 
@@ -632,6 +657,7 @@ def p_unary_pre(p):
     elif p[1] == "--":
         p[0] = ("PREDEC", "--", p[2])
         print(f"\PREDEC\t\t\t{p[2]}")
+    goto(label_stack[-1] + str(label_stack_no[-1]-2))
 
 
 def p_unary_post(p):
@@ -645,6 +671,7 @@ def p_unary_post(p):
     elif p[2] == "--":
         p[0] = ("POSTDEC", "--", p[1])
         print(f"\tPOSTDEC\t\t\t{p[1]}")
+    goto(label_stack[-1] + str(label_stack_no[-1]-2))
 
 
 def p_declaration(p):
