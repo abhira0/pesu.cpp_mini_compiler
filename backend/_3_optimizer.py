@@ -21,22 +21,10 @@ def _get_value(x):
 	return x
 
 def get_operations():
-	return [
-		'ADD',
-		'SUB',
-		'MUL',
-		'DIV',
-	]
+	return [ 'ADD',	'SUB', 'MUL', 'DIV',]
 
 def get_relops():
-	return [
-		'LT',
-		'GT',
-		'LE',
-		'GE',
-		'EQ',
-		'NEQ',
-	]
+	return ['LT', 'GT',	'LE', 'GE', 'EQ', 'NEQ',]
 
 def perform_operation(operation, var1, var2):
 	t = type(var1)
@@ -121,8 +109,18 @@ if __name__ == '__main__':
 			pass
 
 		instruction = line[0]									# [op	var1	var2	result] --> Quadraple Format
+
+		""" -----------------------------------------------------------------------------------------------------------
+				VARIABLE OPTIMIZATION 
+		|---------------------------------------------------------------------------------------------------------- """
+
 		if instruction == 'VAR':
 			optimized_tac.append(line)
+		
+			""" -----------------------------------------------------------------------------------------------------------
+				ASSIGNMENT OPERATION OPTIMIZATION
+			|---------------------------------------------------------------------------------------------------------- """
+		
 		elif instruction == 'ASSIGN':							# [=	var1	(emp)	result] --> Quadraple Format
 			variable = line[3]									# Result field in the quadraple
 			value = get_value(line[1], SymbolTable)				
@@ -143,7 +141,12 @@ if __name__ == '__main__':
 			if line[3][0] != 't':
 				line[1] = update_element(line[1], updated_val=value)
 				optimized_tac.append(line)
-		elif instruction in get_operations():
+
+			""" -----------------------------------------------------------------------------------------------------------
+				MATHEMATICAL OPERATION OPTIMIZATION  
+			|---------------------------------------------------------------------------------------------------------- """
+
+		elif instruction in get_operations():			#	get_opearations = ['ADD','SUB','MUL','DIV',]
 			variable = line[3]
 			variable1 = get_value(line[1], SymbolTable)
 			variable2 = get_value(line[2], SymbolTable)
@@ -182,11 +185,18 @@ if __name__ == '__main__':
 				line[2] = update_element(line[2])
 				optimized_tac.append(line)
 
+			""" -----------------------------------------------------------------------------------------------------------
+			|---------------------------------------------------------------------------------------------------------- """
+
 		elif instruction[0] == 'l':
 			optimized_tac.append(line)
 
-		elif instruction in get_relops():		# relop		Var1	Var2	(=	a	b)
-			variable1 = line[1]
+			""" -----------------------------------------------------------------------------------------------------------
+				RELATIONAL OPERATOR OPTIMIZATION
+			|---------------------------------------------------------------------------------------------------------- """
+
+		elif instruction in get_relops():		#	get_relops = ['LT','GT','LE','GE','EQ','NEQ',]
+			variable1 = line[1]					#	
 			variable2 = line[2]
 			line[1] = update_element(line[1])
 			line[2] = update_element(line[2])
@@ -200,6 +210,10 @@ if __name__ == '__main__':
 				sources.add(line[1])
 			if type(_get_value(line[2])) == type(""):
 				sources.add(line[2])
+
+			""" -----------------------------------------------------------------------------------------------------------
+				GOTO OPTIMIZATION 
+			|---------------------------------------------------------------------------------------------------------- """
 
 		elif instruction == 'GOTO':
 			optimized_tac.append(line)
