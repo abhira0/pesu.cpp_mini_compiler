@@ -116,12 +116,12 @@ if __name__ == '__main__':
 				destinations.add(line[3])
 		except:
 			pass
-		instruction = line[0]
+		instruction = line[0]									# [op	var1	var2	result] --> Quadraple Format
 		if instruction == 'VAR':
 			optimized_tac.append(line)
-		elif instruction == 'ASSIGN':
-			variable = line[3]
-			value = get_value(line[1], SymbolTable)
+		elif instruction == 'ASSIGN':							# [=	var1	(emp)	result] --> Quadraple Format
+			variable = line[3]									# Result field in the quadraple
+			value = get_value(line[1], SymbolTable)				
 			SymbolTable.update_val(variable, value)
 			SymbolTable.update_type(variable, type(value))
 
