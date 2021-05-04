@@ -262,9 +262,9 @@ def decl_temp(val, val_type):
 
 def p_start(p):
     """
-    start : statement_list
+    start : INT MAIN LPAREN RPAREN LBRACE statement_list RBRACE
     """
-    p[0] = p[1]
+    p[0] = p[4]
 
 
 def p_while(p):
