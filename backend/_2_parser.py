@@ -27,11 +27,7 @@ class ClassSymbolTable:
         self.symbols = {}
 
     def insert(self, var):
-        if var in self.symbols.keys():
-            # print(var,"Sym Tab: has already been declared")
-            pass
-        else:
-            # print("Inserting.......",var)
+        if var not in self.symbols.keys():
             self.symbols[var] = {"name": var, "type": None, "value": None}
 
     def display(self):
@@ -288,12 +284,14 @@ def p_for(p):
     # tables.append(stack.pop())
     tables[-1].name = "FOR"
 
+
 def p_check_for(p):
     """
     check_for : empty
     """
     global for_expr
     for_expr = True
+
 
 def p_uncheck_for(p):
     """
@@ -302,7 +300,7 @@ def p_uncheck_for(p):
     global for_expr
     for_expr = False
     print_label()
-    
+
 
 def p_cond_label(p):
     """
@@ -601,7 +599,7 @@ def p_cond(p):
 
     try:
         global for_expr
-        if(for_expr == False):
+        if for_expr == False:
             print(
                 "\t%s\t%s\t%s\t%s"
                 % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
@@ -609,10 +607,10 @@ def p_cond(p):
             goto(label_stack[-1] + str(label_stack_no[-1] + 1))
             print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
             label_stack_no[-1] += 1
-        elif(for_expr == True):
+        elif for_expr == True:
             print(
                 "\t%s\t%s\t%s\t%s"
-                % (sym_map[p[2]], t1, t2, label_stack[-1]+ str(label_stack_no[-1] + 1))
+                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1] + 1))
             )
             goto(label_stack[-1] + str(label_stack_no[-1] + 2))
             print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
@@ -657,7 +655,7 @@ def p_unary_pre(p):
     elif p[1] == "--":
         p[0] = ("PREDEC", "--", p[2])
         print(f"\PREDEC\t\t\t{p[2]}")
-    goto(label_stack[-1] + str(label_stack_no[-1]-2))
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
 def p_unary_post(p):
@@ -671,7 +669,7 @@ def p_unary_post(p):
     elif p[2] == "--":
         p[0] = ("POSTDEC", "--", p[1])
         print(f"\tPOSTDEC\t\t\t{p[1]}")
-    goto(label_stack[-1] + str(label_stack_no[-1]-2))
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
 def p_declaration(p):
