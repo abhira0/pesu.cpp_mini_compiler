@@ -1,65 +1,43 @@
 import argparse
+import json
 import pickle
-import sys
+import sys, pandas, tabulate
 
 import ply.lex as lex
 import ply.yacc as yacc
 from ply.lex import LexToken
-
-from tokrules import *
-
-cached_input = """
-int              a;
-/*
-fgrhjfbkjnij
-djvhgdhjbfdhb \n \n 563e
-
-*/
-int b;
-int a;
-a = 40;
-for( b = 50; c<10; c++) {
-switch (a){
-case 4: int y; int po;break;
-default: float sfas;
-// haha
-}
-}
-"""
+from _0_tokrules import *
 
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
 
-class ClassSymbolTable:
-    def __init__(self):
-        self.symbols = dict()
-
+class utils:
     @staticmethod
-    def line(length=20):
+    def dashedLine(length: int = 25) -> None:
         print("-" * length)
 
+    def display_table(dikt: dict, title: str, transpose: bool = True) -> None:
+        df = pandas.DataFrame(dikt)
+        df = df.transpose() if transpose else df
+        if dikt:
+            print(f"\t\t{title}")
+        cprint(
+            tabulate.tabulate(df, headers="keys", tablefmt="pretty", showindex=False),
+            "green",
+        )
+
+
+class ClassSymbolTable:
+    def __init__(self):
+        self.symbols = {}
+
     def insert(self, var):
-        if var in self.symbols.keys():
-            # print(var,"Sym Tab: has already been declared")
-            pass
-        else:
-            # print("Inserting.......",var)
+        if var not in self.symbols.keys():
             self.symbols[var] = {"name": var, "type": None, "value": None}
 
     def display(self):
-        if len(self.symbols) == 0:
-            print("Empty table")
-            return
-
-        self.line(60)
-        print("\tID\tTYPE\t\tVALUE\t")
-
-        for key in self.symbols.keys():
-            print("\t", end="")
-            print(self.symbols[key]["name"], end="\t")
-            print(self.symbols[key]["type"], end="\t\t")
-            print(self.symbols[key]["value"])
-        print()
+        title = f"Symbol Table"
+        utils.display_table(self.symbols, title)
 
     def update_val(self, var, new_val):
         self.symbols[var]["value"] = new_val
@@ -74,50 +52,38 @@ class ClassSymbolTable:
         self.symbols[var]["type"] = t
 
 
-class Table:
+class ScopeTable:
     def __init__(self, name=""):
         self.variables = {}
         self.name = name
-        self.types = {"INT": type(int()), "FLOAT": type(float()), "CHAR": type(str())}
-
-    @staticmethod
-    def line(length=20):
-        print("-" * length)
+        self.types = {
+            "INT": type(int()),
+            "FLOAT": type(float()),
+            "CHAR": type(str()),
+            "int": type(int()),
+            "float": type(float()),
+            "char": type(str()),
+        }
 
     def insert(self, var, var_type):
-        # print("Inserting.......",var_type)
         if var in self.variables.keys():
-            print(var, "has already been declared in Line no.", id_map[var]["line_no"])
+            line_no = idm.dikt[var]["line_no"]
+            wprint(f"{var} has already been declared in Line no. {line_no}")
             raise ValueError
         else:
             self.variables[var] = {
                 "name": var,
                 "type": "Default_type",
                 "value": None,
-                "address": -1,
-                "lineno": id_map[var]["line_no"],
+                "address": None,
+                "lineno": idm.dikt[var]["line_no"],
                 "code": 1,
             }  # 1->recently added, 0 otherwise
             self.variables[var]["address"] = hex(id(self.variables[var]["name"]))
 
     def display(self):
-        if len(self.variables) == 0:
-            print("Empty table")
-            return
-
-        self.line(60)
-        print(f"\t\tTable for : {self.name} scope")
-        self.line(60)
-        print("\tID\tTYPE\tVALUE\tADDRESS\t\tLINE_NO")
-
-        for key in self.variables.keys():
-            print("\t", end="")
-            print(self.variables[key]["name"], end="\t")
-            print(self.variables[key]["type"], end="\t")
-            print(self.variables[key]["value"], end="\t")
-            print(self.variables[key]["address"], end="\t")
-            print(self.variables[key]["lineno"])
-        print()
+        title = f"Table for : {self.name} scope"
+        utils.display_table(self.variables, title)
 
     def update_type(self, new_type):
         for key in self.variables.keys():
@@ -127,7 +93,7 @@ class Table:
                 if self.variables[key]["value"] != None and self.types[
                     new_type
                 ] != type(self.variables[key]["value"]):
-                    print(
+                    wprint(
                         f'Type of {key} does not match {self.variables[key]["value"]}!'
                     )
 
@@ -155,19 +121,19 @@ class Table:
                 displayNotDeclared(var)
             else:
                 t = get_type(var)  # self.variables[var]['type']
-                if t != "Default_type" and self.types[t] != type(new_val):
-                    print(f"Type of {var} does not match {new_val}!")
+                if t != "Default_type" and self.types[t.upper()] != type(new_val):
+                    wprint(f"Type of {var} does not match {new_val}!")
                 set_val(var, new_val)
 
 
 tables = []
-stack = [Table("GLOBAL")]
+stack = [ScopeTable("GLOBAL")]
 label_stack = ["l"]
 label_stack_no = [0]
 switch_expr = None
 cases_list = []
 SymbolTable = ClassSymbolTable()
-
+for_expr = False
 temp_var_no = 0
 
 
@@ -211,7 +177,7 @@ def _get_value(x):
 
 
 def isDeclared(var):
-    if var not in id_map:
+    if var not in idm.dikt:
         return True
 
     i = len(stack) - 1
@@ -225,61 +191,61 @@ def isDeclared(var):
 
 def displayNotDeclared(var):
     # print(f"{var} has not been declared. Line no. {id_map[var]['line_no']}")
-    print(f"{var} has not been declared. ")
+    wprint(f"{var} has not been declared. ")
 
 
 def print_label():
     global label_stack
     global label_stack_no
-    print(f"{label_stack[-1]}{label_stack_no[-1]}:")
+    cprint(f"{label_stack[-1]}{label_stack_no[-1]}:", "cyan")
     label_stack_no[-1] += 1
 
 
-def goto(label, _print=True):
-    s = f"\tGOTO\t\t\t{label}"
-    if _print:
-        print(s)
+def goto(text, verbose: bool = True):
+    s = f"\tGOTO\t\t\t{text}"
+    cprint(s, "cyan") if verbose else None
     return s
 
 
-def assign(dst, rs, _print=True):
+def assign(dst, rs, verbose=True):
     s = ""
     # variable not in id_map => variable is a temp variable
-    if rs not in id_map and dst not in id_map:
+    if rs not in idm.dikt and dst not in idm.dikt:
         s += f"\tASSIGN\t{rs}\t\t{dst}"
         SymbolTable.insert(dst)
-    elif rs in id_map and dst not in id_map:
-        temp = id_map[rs]["scope"][-1] - 1
+    elif rs in idm.dikt and dst not in idm.dikt:
+        temp = idm.dikt[rs]["scope"][-1] - 1
         s += f"\tASSIGN\t{rs}_{temp}\t\t{dst}"
         SymbolTable.insert(dst)
-    elif rs not in id_map and dst in id_map:
-        s += f"\tASSIGN\t{rs}\t\t{dst}_{id_map[dst]['version_no']}"
-        SymbolTable.insert(f"{dst}_{id_map[dst]['version_no']}")
-        id_map[dst]["version_no"] += 1
-        id_map[dst]["scope"][-1] = id_map[dst]["version_no"]
+    elif rs not in idm.dikt and dst in idm.dikt:
+        s += f"\tASSIGN\t{rs}\t\t{dst}_{idm.dikt[dst]['version_no']}"
+        SymbolTable.insert(f"{dst}_{idm.dikt[dst]['version_no']}")
+        idm.dikt[dst]["version_no"] += 1
+        idm.dikt[dst]["scope"][-1] = idm.dikt[dst]["version_no"]
     else:
-        temp = id_map[rs]["scope"][-1] - 1
-        s += f"\tASSIGN\t{rs}_{temp}\t\t{dst}_{id_map[dst]['version_no']}"
+        temp = idm.dikt[rs]["scope"][-1] - 1
+        s += f"\tASSIGN\t{rs}_{temp}\t\t{dst}_{idm.dikt[dst]['version_no']}"
         SymbolTable.insert(
-            f"{dst}_{id_map[dst]['version_no']}"
+            f"{dst}_{idm.dikt[dst]['version_no']}"
         )  # Should I update the value?
-        id_map[dst]["version_no"] += 1
-        id_map[dst]["scope"][-1] = id_map[dst]["version_no"]
+        idm.dikt[dst]["version_no"] += 1
+        idm.dikt[dst]["scope"][-1] = idm.dikt[dst]["version_no"]
+    # SymbolTable.display()
 
-    if _print:
-        print(s)
+    if verbose:
+        cprint(s, "cyan")
     return s
 
 
-def decl_var(var, _print=True):
+def decl_var(var, verbose=True):
     s = ""
-    if var in id_map:
+    if var in idm.dikt:
         s += f"\tVAR\t\t\t{var}"
     else:
         SymbolTable.insert(var)
 
-    if _print and len(s) > 0:
-        print(s)
+    if verbose and len(s) > 0:
+        cprint(s, "cyan")
     return s
 
 
@@ -292,76 +258,72 @@ def decl_temp(val, val_type):
     return t
 
 
-def modify_id_map(op):
-    if op == "push":
-        for i in id_map:
-            id_map[i]["scope"].append(id_map[i]["version_no"])
-    else:
-        for i in id_map:
-            id_map[i]["scope"].pop()
-
-
-def p_for(p):
-    """
-    for :  FOR LPAREN assign SEMI cond SEMI unary RPAREN LBRACE new_scope statement RBRACE
-    """
-    p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
-
-    print("Deleting scope table")
-    tables.append(stack.pop())
-    tables[-1].name = "FOR"
+""" ---------------------------------------------------------------------
+    |   Grammer Rules with actions
+    --------------------------------------------------------------------- """
 
 
 def p_start(p):
     """
-    start : statement_list
+    start : INT MAIN LPAREN RPAREN LBRACE statement_list RBRACE
     """
-    p[0] = p[1]
+    p[0] = p[6]
 
 
-def p_while(p):
+def p_for(p):
     """
-    while :  WHILE gen_new_label new_tab LPAREN cond RPAREN LBRACE new_scope statement_list RBRACE delete_scope
+    for :  FOR LPAREN check_for new_scope statement gen_new_label cond SEMI unary RPAREN LBRACE gen_new_label statement_list cond_label RBRACE uncheck_for delete_scope
     """
-    p[0] = ("while", p[5], p[7], p[9], p[10])
+    p[0] = ("for", p[3], p[5], p[7], p[9], p[10], p[11])
 
-    tables[-1].name = "WHILE"
-    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
+    tables[-1].name = "FOR"
+
+
+def p_check_for(p):
+    """
+    check_for : empty
+    """
+    global for_expr
+    for_expr = True
+
+
+def p_uncheck_for(p):
+    """
+    uncheck_for : empty
+    """
+    global for_expr
+    for_expr = False
     print_label()
+
+
+def p_cond_label(p):
+    """
+    cond_label : empty
+    """
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
 def p_new_scope(p):
     """
     new_scope : empty
     """
-    stack.append(Table())
+    stack.append(ScopeTable())
     label_stack.append(label_stack[-1] + str(label_stack_no[-1]) + "_")
     label_stack_no.append(0)
 
-    modify_id_map("push")
+    idm.modify("push")
 
 
 def p_delete_scope(p):
     """
     delete_scope : empty
     """
-    # print("Deleting scope table")
 
     tables.append(stack.pop())
     label_stack.pop()
     label_stack_no.pop()
 
-    modify_id_map("pop")
-
-
-def p_if(p):
-    """
-    if : IF new_tab LPAREN cond RPAREN LBRACE new_scope statement_list RBRACE delete_scope optional
-    """
-    p[0] = ("if", p[4], p[6], p[8], p[9])
-    # tables[-1].name = 'IF'
-
-    print_label()
+    idm.modify("pop")
 
 
 def p_new_tab(p):
@@ -370,28 +332,6 @@ def p_new_tab(p):
     """
     p[0] = p[1]
     print("\t", end="")
-
-
-def p_optional_1(p):
-    """
-    optional : empty
-    """
-    p[0] = p[1]
-
-
-def p_optional(p):
-    """
-    optional : ELSE gen_goto gen_new_label LBRACE new_scope statement_list RBRACE delete_scope
-    """
-    p[0] = ("else", p[4], p[6], p[7])
-    # tables[-1].name = 'ELSE'
-
-
-def p_gen_goto(p):
-    """
-    gen_goto : empty
-    """
-    goto(label_stack[-1] + str(label_stack_no[-1] + 1))
 
 
 def p_gen_new_label(p):
@@ -404,21 +344,22 @@ def p_gen_new_label(p):
 
 def p_switch(p):
     """
-    switch : SWITCH LPAREN switch_expr RPAREN LBRACE labeled_statement_list RBRACE
+    switch : SWITCH LPAREN new_scope switch_expr RPAREN LBRACE labeled_statement_list RBRACE delete_scope
     """
     p[0] = ("switch", p[3], p[5], p[6], p[7])
-    print("l_comparisons:")
+    tables[-1].name = "SWICTH"
+    cprint("l_comparisons:", "cyan")
     # print cases here
     for case in cases_list:
         if case[0] == "case":
             try:
-                temp = id_map[switch_expr]["scope"][-1] - 1
-                print(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}")
+                temp = idm.dikt[switch_expr]["scope"][-1] - 1
+                cprint(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}", "cyan")
             except:
-                print(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}")
+                cprint(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}", "cyan")
         else:
             goto(f"{case[1]}")
-    print("l_next_switch:")
+    cprint("l_next_switch:", "cyan")
 
 
 def p_switch_expr(p):
@@ -456,6 +397,7 @@ def p_labeled_statement(p):
     labeled_statement : CASE gen_new_label const_expr COLON new_scope statement_list delete_scope
     """
     p[0] = ("case", p[2], p[5])
+    tables[-1].name = "SWITCH CASE"
     temp = label_stack_no[-1] - 1
     cases_list.append(("case", p[3], f"{label_stack[-1]}{temp}"))
 
@@ -465,6 +407,7 @@ def p_labeled_statement_1(p):
     labeled_statement :  DEFAULT COLON gen_new_label new_scope statement_list delete_scope
     """
     p[0] = ("default", p[5])
+    tables[-1].name = "SWITCH DEF"
     temp = label_stack_no[-1] - 1
     cases_list.append(("default", f"{label_stack[-1]}{temp}"))
     goto("l_next_switch")
@@ -505,8 +448,7 @@ def p_statement_5(p):
     statement : unary
                             | assign
                             | declaration
-                            | while
-                            | if
+                            | for
                             | switch
     """
     p[0] = p[1]
@@ -529,7 +471,7 @@ def p_assign(p):
     if type(p[3]) == tuple:
         assign(p[1], p[3][0])
         stack[-1].update_val(p[1], _get_value(p[3][0]))
-    elif p[3] not in id_map:
+    elif p[3] not in idm.dikt:
         assign(p[1], "t" + str(p[3]))
     else:
         assign(p[1], p[3])
@@ -583,22 +525,23 @@ def p_cond(p):
             | ICONST EQ ICONST
             | FCONST EQ FCONST
     """
-    if p[2] == "LE":
+    sym_map = {"<=": "LE", "<": "LT", ">=": "GE", ">": "GT", "==": "EQ", "!=": "NE"}
+    if p[2] == "<=":
         p[0] = ("CONDI", "<=", p[1], p[3])
-    elif p[2] == "LT":
+    elif p[2] == "<":
         p[0] = ("CONDI", "<", p[1], p[3])
-    elif p[2] == "GE":
+    elif p[2] == ">=":
         p[0] = ("CONDI", ">=", p[1], p[3])
-    elif p[2] == "GT":
+    elif p[2] == ">":
         p[0] = ("CONDI", ">", p[1], p[3])
-    elif p[2] == "EQ":
+    elif p[2] == "==":
         p[0] = ("CONDI", "==", p[1], p[3])
-    elif p[2] == "NE":
+    elif p[2] == "!=":
         p[0] = ("CONDI", "!=", p[1], p[3])
 
-    if p[1] in id_map:
+    if p[1] in idm.dikt:
         if isDeclared(p[1]):
-            temp = id_map[p[1]]["scope"][-1] - 1
+            temp = idm.dikt[p[1]]["scope"][-1] - 1
             t1 = f"{p[1]}_{temp}"
         else:
             temp = "\b" * 8
@@ -606,24 +549,42 @@ def p_cond(p):
     else:
         t1 = p[1]
 
-    if p[3] in id_map:
+    if p[3] in idm.dikt:
         if isDeclared(p[3]):
-            temp = id_map[p[3]]["scope"][-1] - 1
+            temp = idm.dikt[p[3]]["scope"][-1] - 1
             t2 = f"{p[3]}_{temp}"
         else:
             temp = "\b" * 8
-            print(f"{temp}")
+            cprint(f"{temp}", "cyan")
             displayNotDeclared(f"{p[3]}")
     else:
         t2 = p[3]
 
     try:
-        print(
-            "%s\t%s\t%s\t%s" % (p[2], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
-        )
-        goto(label_stack[-1] + str(label_stack_no[-1] + 1))
-        print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
-        label_stack_no[-1] += 1
+        global for_expr
+        if for_expr == False:
+            cprint(
+                "\t%s\t%s\t%s\t%s"
+                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1])),
+                "cyan",
+            )
+            goto(label_stack[-1] + str(label_stack_no[-1] + 1))
+            cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
+            label_stack_no[-1] += 1
+        elif for_expr == True:
+            cprint(
+                "\t%s\t%s\t%s\t%s"
+                % (
+                    sym_map[p[2]],
+                    t1,
+                    t2,
+                    label_stack[-1] + str(label_stack_no[-1] + 1),
+                ),
+                "cyan",
+            )
+            goto(label_stack[-1] + str(label_stack_no[-1] + 2))
+            cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
+            label_stack_no[-1] += 1
     except:
         ...
 
@@ -634,19 +595,19 @@ def p_cond_1(p):
     """
     p[0] = p[1]
 
-    if p[1] in id_map:
+    if p[1] in idm.dikt:
         if isDeclared(p[1]):
-            temp = id_map[p[1]]["scope"][-1] - 1
+            temp = idm.dikt[p[1]]["scope"][-1] - 1
             t1 = f"{p[1]}_{temp}"
         else:
             temp = "\b" * 8
-            print(f"{temp}")
+            cprint(f"{temp}", "cyan")
             displayNotDeclared(f"{p[1]}")
     else:
         t1 = p[1]
 
     try:
-        print("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]))
+        cprint("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]), "cyan")
         goto(label_stack[-1] + str(label_stack_no[-1] + 1))
         print_label()
     except:
@@ -658,10 +619,13 @@ def p_unary_pre(p):
     unary : PLUSPLUS ID
        | MINUSMINUS ID
     """
-    if p[1] == "PLUSPLUS":
+    if p[1] == "++":
         p[0] = ("PREINC", "++", p[2])
-    elif p[1] == "MINUSMINUS":
+        cprint(f"\PREINC\t\t\t{p[2]}", "cyan")
+    elif p[1] == "--":
         p[0] = ("PREDEC", "--", p[2])
+        cprint(f"\PREDEC\t\t\t{p[2]}", "cyan")
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
 def p_unary_post(p):
@@ -669,10 +633,13 @@ def p_unary_post(p):
     unary : ID PLUSPLUS
        | ID MINUSMINUS
     """
-    if p[2] == "PLUSPLUS":
+    if p[2] == "++":
         p[0] = ("POSTINC", "++", p[1])
-    elif p[2] == "MINUSMINUS":
+        cprint(f"\tPOSTINC\t\t\t{p[1]}", "cyan")
+    elif p[2] == "--":
         p[0] = ("POSTDEC", "--", p[1])
+        cprint(f"\tPOSTDEC\t\t\t{p[1]}", "cyan")
+    goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
 def p_declaration(p):
@@ -737,7 +704,7 @@ def p_init_1(p):
         if type(p[3]) == tuple:
             assign(p[1], p[3][0])
             stack[-1].update_val(p[1], _get_value(p[3][0]))
-        elif p[3] not in id_map:
+        elif p[3] not in idm.dikt:
             assign(p[1], "t" + str(p[3]))
         else:
             if isDeclared(p[3]):
@@ -745,7 +712,7 @@ def p_init_1(p):
             else:
                 displayNotDeclared(p[3])
     except Exception:
-        print("Caught exception")
+        wprint("Caught exception")
 
 
 def p_init(p):
@@ -798,9 +765,9 @@ def p_expr(p):
     if type(p[1]) == type((1,)):  # ICONST or FCONST
         t1 = decl_temp(p[1][0], p[1][1])
         t1 = f"t{t1}"
-    elif p[1] in id_map:  # ID
+    elif p[1] in idm.dikt:  # ID
         if isDeclared(p[1]):
-            temp = id_map[p[1]]["scope"][-1] - 1
+            temp = idm.dikt[p[1]]["scope"][-1] - 1
             t1 = f"{p[1]}_{temp}"
         else:
             displayNotDeclared(p[1])
@@ -810,9 +777,9 @@ def p_expr(p):
     if type(p[3]) == tuple:
         t2 = decl_temp(p[3][0], p[3][1])
         t2 = f"t{t2}"
-    elif p[3] in id_map:
+    elif p[3] in idm.dikt:
         if isDeclared(p[3]):
-            temp = id_map[p[3]]["scope"][-1] - 1
+            temp = idm.dikt[p[3]]["scope"][-1] - 1
             t2 = f"{p[3]}_{temp}"
         else:
             displayNotDeclared(p[3])
@@ -822,11 +789,11 @@ def p_expr(p):
     try:
         if p[2] == "PLUS":
             decl_var(f"t{temp_var_no}")
-            print(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}")
+            cprint(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
             temp_var_no += 1
         elif p[2] == "MINUS":
             decl_var(f"t{temp_var_no}")
-            print(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}")
+            cprint(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
             temp_var_no += 1
     except Exception:
         ...
@@ -852,8 +819,8 @@ def p_term(p):
     if type(p[1]) == type((1,)):  # ICONST or FCONST
         t1 = decl_temp(p[1][0], p[1][1])
         t1 = f"t{t1}"
-    elif p[1] in id_map:  # ID
-        temp = id_map[p[1]]["scope"][-1] - 1
+    elif p[1] in idm.dikt:  # ID
+        temp = idm.dikt[p[1]]["scope"][-1] - 1
         t1 = f"{p[1]}_{temp}"
     else:
         t1 = f"t{p[1]}"
@@ -861,20 +828,20 @@ def p_term(p):
     if type(p[3]) == tuple:
         t2 = decl_temp(p[3][0], p[3][1])
         t2 = f"t{t2}"
-    elif p[3] in id_map:
-        temp = id_map[p[3]]["scope"][-1] - 1
+    elif p[3] in idm.dikt:
+        temp = idm.dikt[p[3]]["scope"][-1] - 1
         t2 = f"{p[3]}_{temp}"
     else:
         t2 = f"t{p[3]}"
 
     if p[2] == "TIMES":
         decl_var(f"t{temp_var_no}")
-        print(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}")
+        cprint(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
         temp_var_no += 1
 
     elif p[2] == "DIVIDE":
         decl_var(f"t{temp_var_no}")
-        print(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}")
+        cprint(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
         temp_var_no += 1
 
     p[0] = str(temp_var_no - 1)
@@ -910,9 +877,9 @@ def p_factor_2(p):
 
 def p_error(p):
     if p:
-        print("Syntax error in input!\t Line no:", p.lineno)
+        wprint(f"Syntax error in input!\t Line no: {p.lineno}")
     else:
-        print("Syntax error in input!")
+        wprint("Syntax error in input!")
         return
     while True:
         tok = parser.token()  # Get the next token
@@ -933,83 +900,65 @@ def display_all_tables():
         t.display()
 
 
-tokens_lines = list()
+class CustomLexer(object):
+    def __init__(self):
+        self.var_token_gen = self.token_gen()
 
+    def token_gen(self):
+        for token in symbol_table["items"]:
+            lextoken_obj = LexToken()
+            lextoken_obj.type = token[0]
+            lextoken_obj.value = token[1]
+            lextoken_obj.lineno = token[2]
+            lextoken_obj.lexpos = token[3]
+            yield lextoken_obj
 
-def get_token_line():
-    global tokens_lines
-    print(
-        " ------------------------------------------------ 1st token lines ---------------------------------------------\n"
-    )
-    print(tokens_lines)
-    if tokens_lines != []:
-        result = tokens_lines[0].strip()
-        tokens_lines = tokens_lines[1:]
-        print(
-            " ------------------------------------------------ 2nd token lines ---------------------------------------------\n"
-        )
-        print(tokens_lines)
-        print(
-            " ------------------------------------------------------- done ------------------------------------------------ \n"
-        )
-        return result
-    else:
-        return tokens_lines
-
-
-pa2_tokens = []
-
-
-class PA2Lexer(object):
     def token(self):
-        global pa2_tokens
-        if pa2_tokens == []:
-            return None
-        (lineno, token_type, lexeme) = pa2_tokens[0]
-        pa2_tokens = pa2_tokens[1:]
-        tok = LexToken()
-        tok.type = token_type
-        tok.value = lexeme
-        tok.lineno = lineno
-        tok.lexpos = 0
-        return tok
+        try:
+            ret_var = next(self.var_token_gen)
+        except StopIteration:
+            ret_var = None
+        return ret_var
 
 
-id_map = {}
+class IDMap:
+    dikt = {}
 
-if __name__ == "__main__":
-
-    tokens_filename = sys.argv[1]
-    tokens_filehandle = open(tokens_filename, "r")
-    tokens_lines = tokens_filehandle.readlines()
-    tokens_filehandle.close()
-
-    while tokens_lines != []:
-        line_number = get_token_line()
-        token_type = get_token_line()
-        token_lexeme = token_type
-        if token_type in ["ID", "TYPEID", "ICONST", "FCONST", "SCONST", "CCONST"]:
-            token_lexeme = get_token_line()
-
-        if token_type == "ID" and token_lexeme not in id_map:
-            id_map[token_lexeme] = {
-                "line_no": line_number,
-                "scope": [0],
-                "version_no": 0,
+    def new_id(self, tok_val, line_no: int, scope: list = [0], version_no: int = 0):
+        if tok_val not in self.dikt:
+            self.dikt[tok_val] = {
+                "line_no": line_no,
+                "scope": scope,
+                "version_no": version_no,
             }
 
-        pa2_tokens = pa2_tokens + [(line_number, token_type.upper(), token_lexeme)]
-    # print(pa2_tokens)
+    def modify(self, operation):
+        for i in self.dikt:
+            if operation == "push":
+                self.dikt[i]["scope"].append(self.dikt[i]["version_no"])
+            elif operation == "pop":
+                self.dikt[i]["scope"].pop()
 
-    pa2lexer = PA2Lexer()
+    def __str__(self):
+        return f"IDMap Dictionary: {str(self.dikt)}"
 
+
+# import _1_lexer
+
+idm = IDMap()
+idm.dikt = {}
+if __name__ == "__main__":
+    with open("./p2_symbol_table.json") as f:
+        symbol_table = json.load(f)
+    for token in symbol_table["items"]:
+        if token[0] == "ID":
+            idm.new_id(token[1], token[2])
     parser = yacc.yacc()
-    ast = yacc.parse(lexer=pa2lexer)
-    # print(ast)
-
-    # display_all_tables()
-    # SymbolTable.display()
+    ast = yacc.parse(lexer=CustomLexer())
+    display_all_tables()
+    SymbolTable.display()
+    print("ABSTRACT SYNTAX TREE : ", end="")
+    cprint(ast, "green")
 
     with open("symbol_table.pkl", "wb") as f:
         pickle.dump(SymbolTable, f)
-    # print("Done!")

@@ -1,14 +1,13 @@
+import ply.lex as lex
+import _0_tokrules as tokrules
 import json
-
 import ply.lex as lex
 from termcolor import cprint
 
-import _0_tokrules as tokrules
-
 try:
-    file_code = open("../sourceCode.txt", "r").read()
+    file_code = open("../test/for.cpp", "r").read()
 except:
-    file_code = open("./sourceCode.txt", "r").read()
+    file_code = open("./test/phase1test1.cpp", "r").read()
 lexer = lex.lex(module=tokrules)
 lexer.input(file_code)
 
@@ -32,8 +31,7 @@ def getIfNumber(value_, type_):
 
 
 # Compute column.
-#     input is the input text string
-#     token is a token instance
+# input is the input text string, token is a token instance
 def find_column(input, token):
     line_start = input.rfind("\n", 0, token.lexpos) + 1
     first_col = (token.lexpos - line_start) + 1
@@ -41,14 +39,23 @@ def find_column(input, token):
     return (first_col, last_col)
 
 
-token_json = {"items": []}
+p1_token_json = {"items": []}
+p2_token_json = {"items": []}
+
 # Tokenize
 for tok in lexer:
     col_range = find_column(file_code, tok)
+    p2_json_item = [tok.type, tok.value, tok.lineno, tok.lexpos, col_range]
     tok.value = getIfASCII(tok.value, tok.type)
     tok.value = getIfNumber(tok.value, tok.type)
-    json_item = [tok.type, tok.value, tok.lineno, tok.lexpos, col_range]
+    p1_json_item = [tok.type, tok.value, tok.lineno, tok.lexpos, col_range]
     cprint(f"{tok}, Column Range: {col_range}", "green")
-    token_json["items"].append(json_item)
-with open("symbol_table.json", "w") as f:
-    json.dump(token_json, f)
+    p1_token_json["items"].append(p1_json_item)
+    p2_token_json["items"].append(p2_json_item)
+
+
+with open("p1_symbol_table.json", "w") as f:
+    json.dump(p1_token_json, f)
+
+with open("p2_symbol_table.json", "w") as f:
+    json.dump(p2_token_json, f)
