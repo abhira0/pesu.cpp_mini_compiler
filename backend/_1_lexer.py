@@ -4,8 +4,10 @@ import json
 import ply.lex as lex
 from termcolor import cprint
 
-filename = "../test/phase1test5.cpp"
-file_code = open(filename, "r").read()
+try:
+    file_code = open("../test/for.cpp", "r").read()
+except:
+    file_code = open("./test/phase1test1.cpp", "r").read()
 lexer = lex.lex(module=tokrules)
 lexer.input(file_code)
 
