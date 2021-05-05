@@ -1,6 +1,7 @@
 from _2_parser import ClassSymbolTable
 import pickle
 import sys
+import json
 
 expressions = {}
 replacements = {}
@@ -90,9 +91,9 @@ def get_value(x, SymbolTable):
 		return _get_value(x)
 
 if __name__ == '__main__':
-	#SymbolTable = pickle.load(open('symbol_table.pkl', 'rb'))
-	with open("./symbol_table.json") as f:
-    	SymbolTable = json.load(f)	
+	SymbolTable = pickle.load(open('symbol_table.pkl', 'rb'))
+	#with open("./symbol_table.json") as f:
+	#	SymbolTable = json.load(f)	
 
 	tac = []
 	f = open(sys.argv[1], 'r')
