@@ -2,6 +2,7 @@ import argparse
 import json
 import pickle
 import sys, pandas, tabulate
+from termcolor import cprint
 
 import ply.lex as lex
 import ply.yacc as yacc
@@ -36,14 +37,14 @@ class ClassSymbolTable:
     def update_val(self, var, new_val):
         self.symbols[var]["value"] = new_val
 
-    def update_type(self, var, var_type):
-        if var_type == type(str()):
-            t = "CHAR"
-        elif var_type == type(int()):
-            t = "INT"
-        elif var_type == type(float()):
-            t = "FLOAT"
-        self.symbols[var]["type"] = t
+    # def update_type(self, var, var_type):
+    #     if var_type == type(str()):
+    #         t = "CHAR"
+    #     elif var_type == type(int()):
+    #         t = "INT"
+    #     elif var_type == type(float()):
+    #         t = "FLOAT"
+    #     self.symbols[var]["type"] = t
 
 
 class ScopeTable:
@@ -54,20 +55,21 @@ class ScopeTable:
             "INT": type(int()),
             "FLOAT": type(float()),
             "CHAR": type(str()),
-            "int": type(int()),
-            "float": type(float()),
-            "char": type(str()),
+            # "int": type(int()),
+            # "float": type(float()),
+            # "char": type(str()),
         }
 
-    def insert(self, var, var_type):
+    def insert(self, var):
         if var in self.variables.keys():
             line_no = idm.dikt[var]["line_no"]
             wprint(f"{var} has already been declared in Line no. {line_no}")
             raise ValueError
         else:
+            print(var_type)
             self.variables[var] = {
                 "name": var,
-                "type": "Default_type",
+                "type": "DefaultType",
                 "value": None,
                 "address": None,
                 "lineno": idm.dikt[var]["line_no"],
@@ -81,42 +83,22 @@ class ScopeTable:
     def update_type(self, new_type):
         for key in self.variables.keys():
             if self.variables[key]["code"]:
-                self.variables[key]["type"] = new_type
-
-                if self.variables[key]["value"] != None and self.types[
-                    new_type
-                ] != type(self.variables[key]["value"]):
-                    print(
-                        f'Type of {key} does not match {self.variables[key]["value"]}!'
-                    )
-
+                if self.variables[key]["type"] != new_type:
+                    value__ = self.variables[key]["value"]
+                    print(f"Type of {key} does not match {value__}")
                 self.variables[key]["code"] = 0
 
-                if self.variables[key]["value"] == None:
-                    if new_type == "INT":
-                        self.variables[key]["value"] = 0
-                    elif new_type == "CHAR":
-                        self.variables[key]["value"] = ""
-                    elif new_type == "FLOAT":
-                        self.variables[key]["value"] = 0.0
-
-    def update_val(self, var, new_val):
-        try:
-            if not isDeclared(var):
-                displayNotDeclared(var)
+    def update_val(self, var, new_val, val_type):
+        if not isDeclared(var):
+            displayNotDeclared(var)
+        else:
+            print("UPDATE_VAL", var, new_val, get_val(new_val), val_type)
+            if get_val(new_val):
+                set_val(var, get_val(new_val), val_type)
             else:
-                if get_val(new_val) == None:
-                    raise Exception
-                else:
-                    set_val(var, get_val(new_val))
-        except Exception:
-            if not isDeclared(var):
-                displayNotDeclared(var)
-            else:
-                t = get_type(var)  # self.variables[var]['type']
-                if t != "Default_type" and self.types[t.upper()] != type(new_val):
-                    print(f"Type of {var} does not match {new_val}!")
-                set_val(var, new_val)
+                print(var, val_type)
+                set_val(var, new_val, val_type)
+        cprint(str(self.variables), "cyan")
 
 
 tables = []
@@ -138,11 +120,12 @@ def get_type(var):
         i -= 1
 
 
-def set_val(var, val):
+def set_val(var, val, val_type):
     i = len(stack) - 1
     while i >= 0:
         if var in stack[i].variables:
             stack[i].variables[var]["value"] = val
+            stack[i].variables[var]["type"] = val_type
             break
         i -= 1
 
@@ -360,10 +343,10 @@ def p_switch_expr(p):
                     | ICONST
     """
     p[0] = p[1]
-
+    print(p[1])
     global switch_expr
-    if isDeclared(p[1][0]):
-        switch_expr = p[1][0]
+    if isDeclared(p[1]):
+        switch_expr = p[1]
     else:
         displayNotDeclared(f"{p[1][0]}")
 
@@ -457,10 +440,10 @@ def p_assign(p):
 
     if not isDeclared(p[1]):
         displayNotDeclared(p[1])
-
+    print("expr", p[3])
     if type(p[3]) == tuple:
         assign(p[1], p[3][0])
-        stack[-1].update_val(p[1], _get_value(p[3][0]))
+        stack[-1].update_val(p[1], (p[3][0]), p[3][1])
     elif p[3] not in idm.dikt:
         assign(p[1], "t" + str(p[3]))
     else:
@@ -472,12 +455,13 @@ def p_assign_1(p):
     assign : ID EQUALS CCONST SEMI
     """
     p[0] = (p[1], p[3])
-
+    print(p[1])
     if not isDeclared(p[1]):
         displayNotDeclared(p[1])
     else:
+        print(p[1], p[2], p[3])
         assign(p[1], p[3])
-        stack[-1].update_val(p[1], _get_value(p[3]))
+        stack[-1].update_val(p[1], p[3], "CHAR")
 
 
 def p_cond(p):
@@ -631,6 +615,7 @@ def p_declaration(p):
                             | types arr SEMI
     """
     p[0] = (p[2], p[1])
+    wprint(f"declaration\t\t {p[1]} {p[2]}")
     # Update the types of the above declared variables
     stack[-1].update_type(p[1])
 
@@ -661,7 +646,7 @@ def p_vee_1(p):
     p[0] = p[1]
 
     try:
-        stack[-1].insert(p[1], "")
+        stack[-1].insert(p[1])
         decl_var(p[1])
 
     except Exception:
@@ -680,13 +665,13 @@ def p_init_1(p):
     init : ID EQUALS expr
     """
     p[0] = ("EXPRESSSION CALCULATED", "=", p[1], p[3])
-
+    type_map = {type(int): "INT", type(float): "FLOAT"}
     try:
-        stack[-1].insert(p[1], "")
+        stack[-1].insert(p[1])
         decl_var(p[1])
         if type(p[3]) == tuple:
             assign(p[1], p[3][0])
-            stack[-1].update_val(p[1], _get_value(p[3][0]))
+            stack[-1].update_val(p[1], p[3][0], p[3][1])
         elif p[3] not in idm.dikt:
             assign(p[1], "t" + str(p[3]))
         else:
@@ -694,8 +679,8 @@ def p_init_1(p):
                 assign(p[1], p[3])
             else:
                 displayNotDeclared(p[3])
-    except Exception:
-        print("Caught exception")
+    except Exception as e:
+        print("Caught exception", e)
 
 
 def p_init(p):
@@ -705,8 +690,8 @@ def p_init(p):
     p[0] = ("=", p[1], p[3])
 
     try:
-        stack[-1].insert(p[1], "")
-        stack[-1].update_val(p[1], _get_value(p[3]))
+        stack[-1].insert(p[1])
+        stack[-1].update_val(p[1], p[3], "CHAR")
         decl_var(p[1])
         assign(p[1], p[3])
     except Exception:
@@ -719,7 +704,7 @@ def p_arr(p):
     """
     p[0] = p[1]
     try:
-        stack[-1].insert(p[1], "")
+        stack[-1].insert(p[1])
 
         decl_var(p[1])
     except:
@@ -926,7 +911,7 @@ class IDMap:
         return f"IDMap Dictionary: {str(self.dikt)}"
 
 
-# import _1_lexer
+import _1_lexer
 
 idm = IDMap()
 idm.dikt = {}
