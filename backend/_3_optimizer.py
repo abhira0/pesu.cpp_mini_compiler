@@ -1,4 +1,4 @@
-from main1 import ClassSymbolTable
+from _2_parser import ClassSymbolTable
 import pickle
 import sys
 
@@ -37,7 +37,7 @@ def perform_operation(operation, var1, var2):
 	if operation == 'DIV':
 		return t(var1 / var2)
 
-def update_element(elt, *, updated_val = None):
+def update_element(elt, updated_val = None):
 	if updated_val != None:
 		temp = updated_val
 		return str(temp)
@@ -66,7 +66,8 @@ def get_expression_val(expr):
 	return expressions[expr]
 
 def write_optimized_file(optimized_tac):
-	with open(f'optimized-{sys.argv[1]}', 'w') as file:
+	ar = sys.argv[1]
+	with open(f'optimized-{ar}', 'w') as file:
 		for line in optimized_tac:
 			x = '\t'.join(line) + '\n'
 			if x[0] != 'l':
@@ -91,8 +92,8 @@ def get_value(x, SymbolTable):
 if __name__ == '__main__':
 	#SymbolTable = pickle.load(open('symbol_table.pkl', 'rb'))
 	with open("./symbol_table.json") as f:
-        symbol_table = json.load(f)
-	
+    	SymbolTable = json.load(f)	
+
 	tac = []
 	f = open(sys.argv[1], 'r')
 	for i in f:
@@ -121,7 +122,7 @@ if __name__ == '__main__':
 				|	ASSIGNMENT OPERATION OPTIMIZATION
 				----------------------------------------------------------------------------------------------------------- """
 		
-		elif instruction == 'ASSIGN':							# [=	var1	(emp)	result] --> Quadraple Format
+		elif instruction == 'ASSIGN':							# [	=	var1	(emp)	result	] --> Quadraple Format
 			variable = line[3]									# Result field in the quadraple
 			value = get_value(line[1], SymbolTable)				
 			SymbolTable.update_val(variable, value)
