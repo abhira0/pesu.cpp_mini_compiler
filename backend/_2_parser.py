@@ -16,10 +16,15 @@ class utils:
     def dashedLine(length: int = 25) -> None:
         print("-" * length)
 
-    def display_table(dikt: dict, transpose: bool = True) -> None:
+    def display_table(dikt: dict, title: str, transpose: bool = True) -> None:
         df = pandas.DataFrame(dikt)
         df = df.transpose() if transpose else df
-        print(tabulate.tabulate(df, headers="keys", tablefmt="pretty", showindex=False))
+        if dikt:
+            print(f"\t\t{title}")
+        cprint(
+            tabulate.tabulate(df, headers="keys", tablefmt="pretty", showindex=False),
+            "green",
+        )
 
 
 class ClassSymbolTable:
@@ -31,7 +36,8 @@ class ClassSymbolTable:
             self.symbols[var] = {"name": var, "type": None, "value": None}
 
     def display(self):
-        utils.display_table(self.symbols)
+        title = f"Symbol Table"
+        utils.display_table(self.symbols, title)
 
     def update_val(self, var, new_val):
         self.symbols[var]["value"] = new_val
@@ -76,7 +82,8 @@ class ScopeTable:
             self.variables[var]["address"] = hex(id(self.variables[var]["name"]))
 
     def display(self):
-        utils.display_table(self.variables)
+        title = f"Table for : {self.name} scope"
+        utils.display_table(self.variables, title)
 
     def update_type(self, new_type):
         for key in self.variables.keys():
@@ -86,7 +93,7 @@ class ScopeTable:
                 if self.variables[key]["value"] != None and self.types[
                     new_type
                 ] != type(self.variables[key]["value"]):
-                    print(
+                    wprint(
                         f'Type of {key} does not match {self.variables[key]["value"]}!'
                     )
 
@@ -115,7 +122,7 @@ class ScopeTable:
             else:
                 t = get_type(var)  # self.variables[var]['type']
                 if t != "Default_type" and self.types[t.upper()] != type(new_val):
-                    print(f"Type of {var} does not match {new_val}!")
+                    wprint(f"Type of {var} does not match {new_val}!")
                 set_val(var, new_val)
 
 
@@ -184,19 +191,19 @@ def isDeclared(var):
 
 def displayNotDeclared(var):
     # print(f"{var} has not been declared. Line no. {id_map[var]['line_no']}")
-    print(f"{var} has not been declared. ")
+    wprint(f"{var} has not been declared. ")
 
 
 def print_label():
     global label_stack
     global label_stack_no
-    print(f"{label_stack[-1]}{label_stack_no[-1]}:")
+    cprint(f"{label_stack[-1]}{label_stack_no[-1]}:", "cyan")
     label_stack_no[-1] += 1
 
 
 def goto(text, verbose: bool = True):
     s = f"\tGOTO\t\t\t{text}"
-    print(s) if verbose else None
+    cprint(s, "cyan") if verbose else None
     return s
 
 
@@ -226,7 +233,7 @@ def assign(dst, rs, verbose=True):
     # SymbolTable.display()
 
     if verbose:
-        print(s)
+        cprint(s, "cyan")
     return s
 
 
@@ -238,7 +245,7 @@ def decl_var(var, verbose=True):
         SymbolTable.insert(var)
 
     if verbose and len(s) > 0:
-        print(s)
+        cprint(s, "cyan")
     return s
 
 
@@ -260,7 +267,7 @@ def p_start(p):
     """
     start : INT MAIN LPAREN RPAREN LBRACE statement_list RBRACE
     """
-    p[0] = p[4]
+    p[0] = p[6]
 
 
 def p_for(p):
@@ -340,18 +347,19 @@ def p_switch(p):
     switch : SWITCH LPAREN new_scope switch_expr RPAREN LBRACE labeled_statement_list RBRACE delete_scope
     """
     p[0] = ("switch", p[3], p[5], p[6], p[7])
-    print("l_comparisons:")
+    tables[-1].name = "SWICTH"
+    cprint("l_comparisons:", "cyan")
     # print cases here
     for case in cases_list:
         if case[0] == "case":
             try:
                 temp = idm.dikt[switch_expr]["scope"][-1] - 1
-                print(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}")
+                cprint(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}", "cyan")
             except:
-                print(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}")
+                cprint(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}", "cyan")
         else:
             goto(f"{case[1]}")
-    print("l_next_switch:")
+    cprint("l_next_switch:", "cyan")
 
 
 def p_switch_expr(p):
@@ -389,6 +397,7 @@ def p_labeled_statement(p):
     labeled_statement : CASE gen_new_label const_expr COLON new_scope statement_list delete_scope
     """
     p[0] = ("case", p[2], p[5])
+    tables[-1].name = "SWITCH CASE"
     temp = label_stack_no[-1] - 1
     cases_list.append(("case", p[3], f"{label_stack[-1]}{temp}"))
 
@@ -398,6 +407,7 @@ def p_labeled_statement_1(p):
     labeled_statement :  DEFAULT COLON gen_new_label new_scope statement_list delete_scope
     """
     p[0] = ("default", p[5])
+    tables[-1].name = "SWITCH DEF"
     temp = label_stack_no[-1] - 1
     cases_list.append(("default", f"{label_stack[-1]}{temp}"))
     goto("l_next_switch")
@@ -545,7 +555,7 @@ def p_cond(p):
             t2 = f"{p[3]}_{temp}"
         else:
             temp = "\b" * 8
-            print(f"{temp}")
+            cprint(f"{temp}", "cyan")
             displayNotDeclared(f"{p[3]}")
     else:
         t2 = p[3]
@@ -553,20 +563,27 @@ def p_cond(p):
     try:
         global for_expr
         if for_expr == False:
-            print(
+            cprint(
                 "\t%s\t%s\t%s\t%s"
-                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
+                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1])),
+                "cyan",
             )
             goto(label_stack[-1] + str(label_stack_no[-1] + 1))
-            print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+            cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
             label_stack_no[-1] += 1
         elif for_expr == True:
-            print(
+            cprint(
                 "\t%s\t%s\t%s\t%s"
-                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1] + 1))
+                % (
+                    sym_map[p[2]],
+                    t1,
+                    t2,
+                    label_stack[-1] + str(label_stack_no[-1] + 1),
+                ),
+                "cyan",
             )
             goto(label_stack[-1] + str(label_stack_no[-1] + 2))
-            print("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+            cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
             label_stack_no[-1] += 1
     except:
         ...
@@ -584,13 +601,13 @@ def p_cond_1(p):
             t1 = f"{p[1]}_{temp}"
         else:
             temp = "\b" * 8
-            print(f"{temp}")
+            cprint(f"{temp}", "cyan")
             displayNotDeclared(f"{p[1]}")
     else:
         t1 = p[1]
 
     try:
-        print("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]))
+        cprint("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]), "cyan")
         goto(label_stack[-1] + str(label_stack_no[-1] + 1))
         print_label()
     except:
@@ -604,10 +621,10 @@ def p_unary_pre(p):
     """
     if p[1] == "++":
         p[0] = ("PREINC", "++", p[2])
-        print(f"\PREINC\t\t\t{p[2]}")
+        cprint(f"\PREINC\t\t\t{p[2]}", "cyan")
     elif p[1] == "--":
         p[0] = ("PREDEC", "--", p[2])
-        print(f"\PREDEC\t\t\t{p[2]}")
+        cprint(f"\PREDEC\t\t\t{p[2]}", "cyan")
     goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
@@ -618,10 +635,10 @@ def p_unary_post(p):
     """
     if p[2] == "++":
         p[0] = ("POSTINC", "++", p[1])
-        print(f"\tPOSTINC\t\t\t{p[1]}")
+        cprint(f"\tPOSTINC\t\t\t{p[1]}", "cyan")
     elif p[2] == "--":
         p[0] = ("POSTDEC", "--", p[1])
-        print(f"\tPOSTDEC\t\t\t{p[1]}")
+        cprint(f"\tPOSTDEC\t\t\t{p[1]}", "cyan")
     goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
@@ -695,7 +712,7 @@ def p_init_1(p):
             else:
                 displayNotDeclared(p[3])
     except Exception:
-        print("Caught exception")
+        wprint("Caught exception")
 
 
 def p_init(p):
@@ -772,11 +789,11 @@ def p_expr(p):
     try:
         if p[2] == "PLUS":
             decl_var(f"t{temp_var_no}")
-            print(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}")
+            cprint(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
             temp_var_no += 1
         elif p[2] == "MINUS":
             decl_var(f"t{temp_var_no}")
-            print(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}")
+            cprint(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
             temp_var_no += 1
     except Exception:
         ...
@@ -819,12 +836,12 @@ def p_term(p):
 
     if p[2] == "TIMES":
         decl_var(f"t{temp_var_no}")
-        print(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}")
+        cprint(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
         temp_var_no += 1
 
     elif p[2] == "DIVIDE":
         decl_var(f"t{temp_var_no}")
-        print(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}")
+        cprint(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
         temp_var_no += 1
 
     p[0] = str(temp_var_no - 1)
@@ -860,9 +877,9 @@ def p_factor_2(p):
 
 def p_error(p):
     if p:
-        print("Syntax error in input!\t Line no:", p.lineno)
+        wprint(f"Syntax error in input!\t Line no: {p.lineno}")
     else:
-        print("Syntax error in input!")
+        wprint("Syntax error in input!")
         return
     while True:
         tok = parser.token()  # Get the next token
@@ -931,12 +948,17 @@ class IDMap:
 idm = IDMap()
 idm.dikt = {}
 if __name__ == "__main__":
-    with open("./symbol_table.json") as f:
+    with open("./p2_symbol_table.json") as f:
         symbol_table = json.load(f)
     for token in symbol_table["items"]:
         if token[0] == "ID":
             idm.new_id(token[1], token[2])
     parser = yacc.yacc()
     ast = yacc.parse(lexer=CustomLexer())
+    display_all_tables()
+    SymbolTable.display()
+    print("ABSTRACT SYNTAX TREE : ", end="")
+    cprint(ast, "green")
 
-    print(ast)
+    with open("symbol_table.pkl", "wb") as f:
+        pickle.dump(SymbolTable, f)
