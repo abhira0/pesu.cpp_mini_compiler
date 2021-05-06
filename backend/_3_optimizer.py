@@ -1,7 +1,8 @@
-from _2_parser import SymbolTable
+import json
 import pickle
 import sys
-import json
+
+from _2_parser import SymbolTable
 
 xpr = {}
 rpl = {}

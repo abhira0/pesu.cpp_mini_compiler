@@ -1,11 +1,14 @@
 import argparse
 import json
 import pickle
-import sys, pandas, tabulate
+import sys
 
+import pandas
 import ply.lex as lex
 import ply.yacc as yacc
+import tabulate
 from ply.lex import LexToken
+
 from _0_tokrules import *
 
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
