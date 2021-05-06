@@ -10,6 +10,8 @@ from _0_tokrules import *
 
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
+code_list = []
+
 
 class utils:
     @staticmethod
@@ -197,13 +199,17 @@ def displayNotDeclared(var):
 def print_label():
     global label_stack
     global label_stack_no
-    cprint(f"{label_stack[-1]}{label_stack_no[-1]}:", "cyan")
+    global code_list
+    # cprint(f"{label_stack[-1]}{label_stack_no[-1]}:", "cyan")
+    code_list.append(f"{label_stack[-1]}{label_stack_no[-1]}:")
     label_stack_no[-1] += 1
 
 
 def goto(text, verbose: bool = True):
+    global code_list
     s = f"\tGOTO\t\t\t{text}"
-    cprint(s, "cyan") if verbose else None
+    code_list.append(s)
+    # cprint(s, "cyan") if verbose else None
     return s
 
 
@@ -233,7 +239,9 @@ def assign(dst, rs, verbose=True):
     # SymbolTable.display()
 
     if verbose:
-        cprint(s, "cyan")
+        global code_list
+        code_list.append(s)
+        # cprint(s, "cyan")
     return s
 
 
@@ -245,7 +253,9 @@ def decl_var(var, verbose=True):
         SymbolTable.insert(var)
 
     if verbose and len(s) > 0:
-        cprint(s, "cyan")
+        global code_list
+        code_list.append(s)
+        # cprint(s, "cyan")
     return s
 
 
@@ -348,18 +358,23 @@ def p_switch(p):
     """
     p[0] = ("switch", p[3], p[5], p[6], p[7])
     tables[-1].name = "SWICTH"
-    cprint("l_comparisons:", "cyan")
+    global code_list
+    code_list.append("l_comparisons:")
+    # cprint("l_comparisons:", "cyan")
     # print cases here
     for case in cases_list:
         if case[0] == "case":
             try:
                 temp = idm.dikt[switch_expr]["scope"][-1] - 1
-                cprint(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}", "cyan")
+                code_list.append(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}")
+                # cprint(f"\tEQ\t{switch_expr}_{temp}\t{case[1]}\t{case[2]}", "cyan")
             except:
-                cprint(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}", "cyan")
+                code_list.append(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}")
+                # cprint(f"\tEQ\t{switch_expr}\t{case[1]}\t{case[2]}", "cyan")
         else:
             goto(f"{case[1]}")
-    cprint("l_next_switch:", "cyan")
+    code_list.append("l_next_switch:")
+    # cprint("l_next_switch:", "cyan")
 
 
 def p_switch_expr(p):
@@ -538,6 +553,7 @@ def p_cond(p):
         p[0] = ("CONDI", "==", p[1], p[3])
     elif p[2] == "!=":
         p[0] = ("CONDI", "!=", p[1], p[3])
+    global code_list
 
     if p[1] in idm.dikt:
         if isDeclared(p[1]):
@@ -555,7 +571,8 @@ def p_cond(p):
             t2 = f"{p[3]}_{temp}"
         else:
             temp = "\b" * 8
-            cprint(f"{temp}", "cyan")
+            code_list.append(f"{temp}")
+            # cprint(f"{temp}", "cyan")
             displayNotDeclared(f"{p[3]}")
     else:
         t2 = p[3]
@@ -563,27 +580,42 @@ def p_cond(p):
     try:
         global for_expr
         if for_expr == False:
-            cprint(
+            code_list.append(
                 "\t%s\t%s\t%s\t%s"
-                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1])),
-                "cyan",
+                % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1]))
             )
+            # cprint(
+            #     "\t%s\t%s\t%s\t%s"
+            #     % (sym_map[p[2]], t1, t2, label_stack[-1] + str(label_stack_no[-1])),
+            #     "cyan",
+            # )
             goto(label_stack[-1] + str(label_stack_no[-1] + 1))
-            cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
+            code_list.append("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+            # cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
             label_stack_no[-1] += 1
         elif for_expr == True:
-            cprint(
+            code_list.append(
                 "\t%s\t%s\t%s\t%s"
                 % (
                     sym_map[p[2]],
                     t1,
                     t2,
                     label_stack[-1] + str(label_stack_no[-1] + 1),
-                ),
-                "cyan",
+                )
             )
+            # cprint(
+            #     "\t%s\t%s\t%s\t%s"
+            #     % (
+            #         sym_map[p[2]],
+            #         t1,
+            #         t2,
+            #         label_stack[-1] + str(label_stack_no[-1] + 1),
+            #     ),
+            #     "cyan",
+            # )
             goto(label_stack[-1] + str(label_stack_no[-1] + 2))
-            cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
+            code_list.append("%s:" % (label_stack[-1] + str(label_stack_no[-1])))
+            # cprint("%s:" % (label_stack[-1] + str(label_stack_no[-1])), "cyan")
             label_stack_no[-1] += 1
     except:
         ...
@@ -594,20 +626,22 @@ def p_cond_1(p):
     cond : ID
     """
     p[0] = p[1]
-
+    global code_list
     if p[1] in idm.dikt:
         if isDeclared(p[1]):
             temp = idm.dikt[p[1]]["scope"][-1] - 1
             t1 = f"{p[1]}_{temp}"
         else:
             temp = "\b" * 8
-            cprint(f"{temp}", "cyan")
+            code_list.append(f"{temp}")
+            # cprint(f"{temp}", "cyan")
             displayNotDeclared(f"{p[1]}")
     else:
         t1 = p[1]
 
     try:
-        cprint("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]), "cyan")
+        code_list.append("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]))
+        # cprint("GT\t%s\t0\tl%s" % (t1, label_stack_no[-1]), "cyan")
         goto(label_stack[-1] + str(label_stack_no[-1] + 1))
         print_label()
     except:
@@ -619,12 +653,15 @@ def p_unary_pre(p):
     unary : PLUSPLUS ID
        | MINUSMINUS ID
     """
+    global code_list
     if p[1] == "++":
         p[0] = ("PREINC", "++", p[2])
-        cprint(f"\PREINC\t\t\t{p[2]}", "cyan")
+        code_list.append(f"\PREINC\t\t\t{p[2]}")
+        # cprint(f"\PREINC\t\t\t{p[2]}", "cyan")
     elif p[1] == "--":
         p[0] = ("PREDEC", "--", p[2])
-        cprint(f"\PREDEC\t\t\t{p[2]}", "cyan")
+        code_list.append(f"\PREDEC\t\t\t{p[2]}")
+        # cprint(f"\PREDEC\t\t\t{p[2]}", "cyan")
     goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
@@ -633,12 +670,15 @@ def p_unary_post(p):
     unary : ID PLUSPLUS
        | ID MINUSMINUS
     """
+    global code_list
     if p[2] == "++":
         p[0] = ("POSTINC", "++", p[1])
-        cprint(f"\tPOSTINC\t\t\t{p[1]}", "cyan")
+        code_list.append(f"\tPOSTINC\t\t\t{p[1]}")
+        # cprint(f"\tPOSTINC\t\t\t{p[1]}", "cyan")
     elif p[2] == "--":
         p[0] = ("POSTDEC", "--", p[1])
-        cprint(f"\tPOSTDEC\t\t\t{p[1]}", "cyan")
+        code_list.append(f"\tPOSTDEC\t\t\t{p[1]}")
+        # cprint(f"\tPOSTDEC\t\t\t{p[1]}", "cyan")
     goto(label_stack[-1] + str(label_stack_no[-1] - 2))
 
 
@@ -761,7 +801,7 @@ def p_expr(p):
             | expr MINUS term
     """
     global temp_var_no
-
+    global code_list
     if type(p[1]) == type((1,)):  # ICONST or FCONST
         t1 = decl_temp(p[1][0], p[1][1])
         t1 = f"t{t1}"
@@ -787,13 +827,16 @@ def p_expr(p):
         t2 = f"t{p[3]}"
 
     try:
-        if p[2] == "PLUS":
+
+        if p[2] == "+":
             decl_var(f"t{temp_var_no}")
-            cprint(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
+            code_list.append(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}")
+            # cprint(f"\tADD\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
             temp_var_no += 1
-        elif p[2] == "MINUS":
+        elif p[2] == "-":
             decl_var(f"t{temp_var_no}")
-            cprint(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
+            code_list.append(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}")
+            # cprint(f"\tSUB\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
             temp_var_no += 1
     except Exception:
         ...
@@ -814,34 +857,36 @@ def p_term(p):
             | term DIVIDE factor
     """
     global temp_var_no
-
+    global code_list
     p[0] = (p[1], p[3])
     if type(p[1]) == type((1,)):  # ICONST or FCONST
         t1 = decl_temp(p[1][0], p[1][1])
         t1 = f"t{t1}"
     elif p[1] in idm.dikt:  # ID
-        temp = idm.dikt[p[1]]["scope"][-1] - 1
+        temp = idm.dikt[p[1]]["scope"][-1]
         t1 = f"{p[1]}_{temp}"
     else:
         t1 = f"t{p[1]}"
-
+    # print(p[1], p[2], p[3])
     if type(p[3]) == tuple:
         t2 = decl_temp(p[3][0], p[3][1])
         t2 = f"t{t2}"
     elif p[3] in idm.dikt:
-        temp = idm.dikt[p[3]]["scope"][-1] - 1
+        temp = idm.dikt[p[3]]["scope"][-1]
         t2 = f"{p[3]}_{temp}"
     else:
         t2 = f"t{p[3]}"
 
-    if p[2] == "TIMES":
+    if p[2] == "*":
         decl_var(f"t{temp_var_no}")
-        cprint(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
+        code_list.append(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}")
+        # cprint(f"\tMUL\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
         temp_var_no += 1
 
-    elif p[2] == "DIVIDE":
+    elif p[2] == "/":
         decl_var(f"t{temp_var_no}")
-        cprint(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
+        code_list.append(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}")
+        # cprint(f"\tDIV\t{t1}\t{t2}\tt{temp_var_no}", "cyan")
         temp_var_no += 1
 
     p[0] = str(temp_var_no - 1)
@@ -943,7 +988,7 @@ class IDMap:
         return f"IDMap Dictionary: {str(self.dikt)}"
 
 
-# import _1_lexer
+import _1_lexer
 
 idm = IDMap()
 idm.dikt = {}
@@ -955,10 +1000,16 @@ if __name__ == "__main__":
             idm.new_id(token[1], token[2])
     parser = yacc.yacc()
     ast = yacc.parse(lexer=CustomLexer())
+    for i in code_list:
+        cprint(i, "cyan")
     display_all_tables()
     SymbolTable.display()
     print("ABSTRACT SYNTAX TREE : ", end="")
     cprint(ast, "green")
+    # print(code_list)
 
+    with open("3code.txt", "w") as f:
+        for i in code_list:
+            f.write(i + "\n")
     with open("symbol_table.pkl", "wb") as f:
         pickle.dump(SymbolTable, f)
