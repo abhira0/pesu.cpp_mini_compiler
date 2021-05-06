@@ -978,26 +978,26 @@ def p_error(p):
 """-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_"""
 
 # import _1_lexer
+if __name__ == "__main__":
+    with open("./p2_symbol_table.json") as f:
+        symbol_table = json.load(f)
 
-with open("./p2_symbol_table.json") as f:
-    symbol_table = json.load(f)
-
-idm = IDMap(symbol_table)
-# Parsing
-parser = yacc.yacc()
-ast = yacc.parse(lexer=CustomLexer())
-# Display 3 address code
-for i in code_list:
-    cprint(i, "cyan")
-# Display tables
-utils.display_all_tables()
-SymTab.display()
-# Display AST
-print("ABSTRACT SYNTAX TREE : ", end="")
-cprint(ast, "green")
-# Save outputs
-with open("3code.txt", "w") as f:
+    idm = IDMap(symbol_table)
+    # Parsing
+    parser = yacc.yacc()
+    ast = yacc.parse(lexer=CustomLexer())
+    # Display 3 address code
     for i in code_list:
-        f.write(i + "\n")
-with open("symbol_table.pkl", "wb") as f:
-    pickle.dump(SymTab, f)
+        cprint(i, "cyan")
+    # Display tables
+    utils.display_all_tables()
+    SymTab.display()
+    # Display AST
+    print("ABSTRACT SYNTAX TREE : ", end="")
+    cprint(ast, "green")
+    # Save outputs
+    with open("3code.txt", "w") as f:
+        for i in code_list:
+            f.write(i + "\n")
+    with open("symbol_table.pkl", "wb") as f:
+        pickle.dump(SymTab, f)

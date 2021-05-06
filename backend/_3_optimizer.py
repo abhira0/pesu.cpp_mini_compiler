@@ -3,127 +3,112 @@ import pickle
 import sys
 import json
 
-expressions = {}
-replacements = {}
-sources = set()
-destinations = set()
+xpr = {}
+rpl = {}
+srcs = set()
+dsts = set()
 
 
-def _get_value(x):
-    try:
-        return int(x)
-    except:
-        pass
+class utils:
+    @staticmethod
+    def getActualValue(x):
+        try:
+            return int(x)
+        except:
+            ...
+        try:
+            return float(x)
+        except:
+            ...
+        return x
 
-    try:
-        return float(x)
-    except:
-        pass
+    @staticmethod
+    def setZero(x):
+        if type(x) == type(""):
+            return 0
+        return x
 
-    return x
+    @staticmethod
+    def performOp(operation, var1, var2):
+        t = type(var1)
+        print(var1, var2)
+        var1 = utils.setZero(var1)
+        var2 = utils.setZero(var2)
+        if operation == "ADD":
+            return t(var1 + var2)
+        elif operation == "SUB":
+            return t(var1 - var2)
+        elif operation == "MUL":
+            return t(var1 * var2)
+        elif operation == "DIV":
+            return t(var1 / var2)
 
+    @staticmethod
+    def updateElement(elt, updated_val=None):
+        if updated_val != None:
+            temp = updated_val
+            return str(temp)
+        elif elt in SymTable.symbols and SymTable.symbols[elt]["value"] != None:
+            temp = SymTable.symbols[elt]["value"]
+            return str(temp)
+        else:
+            temp = utils.getVal(elt, SymTable)
+            return str(temp)
 
-def get_operations():
-    return [
-        "ADD",
-        "SUB",
-        "MUL",
-        "DIV",
-    ]
+    @staticmethod
+    def updateExprs(expr, value):
+        """
+        expr : tuple
+                (operation, var1, var2)
+        """
+        xpr[expr] = value
 
+    @staticmethod
+    def exprExists(expr):
+        """
+        expr : tuple
+                (operation, var1, var2)
+        """
+        return expr in xpr.keys()
 
-def get_relops():
-    return [
-        "LT",
-        "GT",
-        "LE",
-        "GE",
-        "EQ",
-        "NEQ",
-    ]
+    @staticmethod
+    def getExprVal(expr):
+        return xpr[expr]
 
+    @staticmethod
+    def opOpt(optimized_tac):
+        with open(f"optimized-3code", "w") as file:
+            for line in optimized_tac:
+                x = "\t".join(line) + "\n"
+                if x[0] != "l":
+                    x = "\t" + x
+                file.write(str(x))
 
-def perform_operation(operation, var1, var2):
-    t = type(var1)
-    if operation == "ADD":
-        return t(var1 + var2)
-    if operation == "SUB":
-        return t(var1 - var2)
-    if operation == "MUL":
-        return t(var1 * var2)
-    if operation == "DIV":
-        return t(var1 / var2)
+    @staticmethod
+    def updateRepl(var, val):
+        rpl[var] = val
 
+    @staticmethod
+    def replExists(var):
+        return var in rpl.keys()
 
-def update_element(elt, updated_val=None):
-    if updated_val != None:
-        temp = updated_val
-        return str(temp)
-    elif elt in SymbolTable.symbols and SymbolTable.symbols[elt]["value"] != None:
-        temp = SymbolTable.symbols[elt]["value"]
-        return str(temp)
-    else:
-        temp = get_value(elt, SymbolTable)  # get value
-        return str(temp)
+    @staticmethod
+    def getRepl(var):
+        return rpl[var]
 
-
-def update_expressions(expr, value):
-    """
-    expr : tuple
-            (operation, var1, var2)
-    """
-    expressions[expr] = value
-
-
-def expression_exists(expr):
-    """
-    expr : tuple
-            (operation, var1, var2)
-    """
-    return expr in expressions.keys()
-
-
-def get_expression_val(expr):
-    return expressions[expr]
-
-
-def write_optimized_file(optimized_tac):
-    ar = sys.argv[1]
-    with open(f"optimized-{ar}", "w") as file:
-        for line in optimized_tac:
-            x = "\t".join(line) + "\n"
-            if x[0] != "l":
-                x = "\t" + x
-            file.write(str(x))
-
-
-def update_replacements(var, val):
-    replacements[var] = val
-
-
-def replacement_exists(var):
-    return var in replacements.keys()
-
-
-def get_replacement(var):
-    return replacements[var]
-
-
-def get_value(x, SymbolTable):
-    if x in SymbolTable.symbols and SymbolTable.symbols[x]["value"] != None:
-        return SymbolTable.symbols[x]["value"]
-    else:
-        return _get_value(x)
+    @staticmethod
+    def getVal(x, SymTable):
+        if x in SymTable.symbols and SymTable.symbols[x]["value"] != None:
+            return SymTable.symbols[x]["value"]
+        else:
+            return utils.getActualValue(x)
 
 
 if __name__ == "__main__":
-    SymbolTable = pickle.load(open("symbol_table.pkl", "rb"))
-    # with open("./symbol_table.json") as f:
-    # 	SymbolTable = json.load(f)
+    SymTable = pickle.load(open("symbol_table.pkl", "rb"))
 
     tac = []
-    f = open(sys.argv[1], "r")
-    for i in f:
+    for i in open("3code.txt", "r"):
         x = i.strip().split("\t")
         tac.append(x)
 
@@ -132,130 +117,117 @@ if __name__ == "__main__":
     for line in tac:
         try:
             if line[3][0] != "l" and line[0] != "VAR":
-                destinations.add(line[3])
+                dsts.add(line[3])
         except:
-            pass
-
-        instruction = line[0]  # [op	var1	var2	result] --> Quadraple Format
-
+            ...
+        instruction = line[0]  # [op	var1	var2	result] --> Quadruple Format
+        
         """ -----------------------------------------------------------------------------------------------------------
-			|	VARIABLE OPTIMIZATION 
-			----------------------------------------------------------------------------------------------------------- """
+            |	NO OPTIMIZATION SECTION
+            ----------------------------------------------------------------------------------------------------------- """
 
         if instruction == "VAR":
             optimized_tac.append(line)
-
-            """ -----------------------------------------------------------------------------------------------------------
-				|	ASSIGNMENT OPERATION OPTIMIZATION
-				----------------------------------------------------------------------------------------------------------- """
-
-        elif instruction == "ASSIGN":  # [	=	var1	(emp)	result	] --> Quadraple Format
-            variable = line[3]  # Result field in the quadraple
-            value = get_value(line[1], SymbolTable)
-            SymbolTable.update_val(variable, value)
-            SymbolTable.update_type(variable, type(value))
-
-            if replacement_exists(line[1]):
-                print(
-                    f"Replacing {line[1]} -> {get_replacement(line[1])} in line: ",
-                    end="\t",
-                )
-                print("\t".join(line))
-                value = get_value(get_replacement(line[1]), SymbolTable)
-                sources.add(get_replacement(line[1]))
-            else:
-                if type(_get_value(line[1])) == type(""):
-                    sources.add(line[1])
-
-            update_replacements(line[3], line[1])
-
-            if line[3][0] != "t":
-                line[1] = update_element(line[1], updated_val=value)
-                optimized_tac.append(line)
-
-            """ -----------------------------------------------------------------------------------------------------------
-				|	MATHEMATICAL OPERATION OPTIMIZATION  
-				----------------------------------------------------------------------------------------------------------- """
-
-        elif (
-            instruction in get_operations()
-        ):  # 	get_opearations = ['ADD','SUB','MUL','DIV',]
-            variable = line[3]
-            variable1 = get_value(line[1], SymbolTable)
-            variable2 = get_value(line[2], SymbolTable)
-            value = perform_operation(operation=line[0], var1=variable1, var2=variable2)
-            SymbolTable.update_val(variable, value)
-            SymbolTable.update_type(variable, type(value))
-
-            if replacement_exists(line[1]):
-                print(
-                    f"Replacing {line[1]} -> {get_replacement(line[1])} in line: ",
-                    end="\t",
-                )
-                print("\t".join(line))
-                line[1] = get_replacement(line[1])
-
-            if replacement_exists(line[2]):
-                print(
-                    f"Replacing {line[2]} -> {get_replacement(line[2])} in line: ",
-                    end="\t",
-                )
-                print("\t".join(line))
-                line[2] = get_replacement(line[2])
-
-            expr = (line[0], line[1], line[2])
-            if not expression_exists(expr):
-                update_expressions(expr, variable)
-            else:
-                update_replacements(variable, get_expression_val(expr))
-                continue
-
-            if type(_get_value(line[1])) == type(""):
-                sources.add(line[1])
-            if type(_get_value(line[2])) == type(""):
-                sources.add(line[2])
-
-            if line[3][0] != "t":
-                line[1] = update_element(line[1])
-                line[2] = update_element(line[2])
-                optimized_tac.append(line)
-
-            """ -----------------------------------------------------------------------------------------------------------
-				|
-				----------------------------------------------------------------------------------------------------------- """
-
+        elif instruction == "GOTO":
+            optimized_tac.append(line)
         elif instruction[0] == "l":
             optimized_tac.append(line)
+            
+        """ -----------------------------------------------------------------------------------------------------------
+            |	ASSIGNMENT OPERATION OPTIMIZATION
+            ----------------------------------------------------------------------------------------------------------- """
 
-            """ -----------------------------------------------------------------------------------------------------------
-				|	RELATIONAL OPERATOR OPTIMIZATION
-				----------------------------------------------------------------------------------------------------------- """
+        elif instruction == "ASSIGN":  # [	=	var1	(emp)	result	] --> Quadruple Format
+            variable = line[3]  # Result field in the quadruple
+            value = utils.getVal(line[1], SymTable)
+            SymTable.update_val(variable, value)
+            SymTable.update_type(variable, type(value))
 
-        elif (
-            instruction in get_relops()
-        ):  # 	get_relops = ['LT','GT','LE','GE','EQ','NEQ',]
+            if utils.replExists(line[1]):
+                print(
+                    f"Replacing {line[1]} -> {utils.getRepl(line[1])} in line: ",
+                    end="\t",
+                )
+                print("\t".join(line))
+                value = utils.getVal(utils.getRepl(line[1]), SymTable)
+                srcs.add(utils.getRepl(line[1]))
+            else:
+                if type(utils.getActualValue(line[1])) == type(""):
+                    srcs.add(line[1])
+
+            utils.updateRepl(line[3], line[1])
+
+            if line[3][0] != "t":
+                line[1] = utils.updateElement(line[1], updated_val=value)
+                optimized_tac.append(line)
+
+        """ -----------------------------------------------------------------------------------------------------------
+            |	MATHEMATICAL OPERATION OPTIMIZATION  
+            ----------------------------------------------------------------------------------------------------------- """
+
+        elif instruction in ["ADD", "SUB", "MUL", "DIV"]:
+            variable = line[3]
+            variable1 = utils.getVal(line[1], SymTable)
+            variable2 = utils.getVal(line[2], SymTable)
+            value = utils.performOp(operation=line[0], var1=variable1, var2=variable2)
+            SymTable.update_val(variable, value)
+            SymTable.update_type(variable, type(value))
+
+            if utils.replExists(line[1]):
+                print(
+                    f"Replacing {line[1]} -> {utils.getRepl(line[1])} in line: ",
+                    end="\t",
+                )
+                print("\t".join(line))
+                line[1] = utils.getRepl(line[1])
+
+            if utils.replExists(line[2]):
+                print(
+                    f"Replacing {line[2]} -> {utils.getRepl(line[2])} in line: ",
+                    end="\t",
+                )
+                print("\t".join(line))
+                line[2] = utils.getRepl(line[2])
+
+            expr = (line[0], line[1], line[2])
+            if not utils.exprExists(expr):
+                utils.updateExprs(expr, variable)
+            else:
+                utils.updateRepl(variable, utils.getExprVal(expr))
+                continue
+
+            if type(utils.getActualValue(line[1])) == type(""):
+                srcs.add(line[1])
+            if type(utils.getActualValue(line[2])) == type(""):
+                srcs.add(line[2])
+
+            if line[3][0] != "t":
+                line[1] = utils.updateElement(line[1])
+                line[2] = utils.updateElement(line[2])
+                optimized_tac.append(line)
+
+        """ -----------------------------------------------------------------------------------------------------------
+            |	RELATIONAL OPERATOR OPTIMIZATION
+            ----------------------------------------------------------------------------------------------------------- """
+
+        elif instruction in ["LT", "GT", "LE", "GE", "EQ", "NEQ"]:
+            # ['LT','GT','LE','GE','EQ','NEQ',]
             variable1 = line[1]  #
             variable2 = line[2]
-            line[1] = update_element(line[1])
-            line[2] = update_element(line[2])
+            line[1] = utils.updateElement(line[1])
+            line[2] = utils.updateElement(line[2])
             optimized_tac.append(line)
 
             # for i in range(1,3):
-            # if type(_get_value(line[i])) == type(""):
+            # if type(utils.getActualValue(line[i])) == type(""):
             # sources.add(line[i])
 
-            if type(_get_value(line[1])) == type(""):
-                sources.add(line[1])
-            if type(_get_value(line[2])) == type(""):
-                sources.add(line[2])
+            if type(utils.getActualValue(line[1])) == type(""):
+                srcs.add(line[1])
+            if type(utils.getActualValue(line[2])) == type(""):
+                srcs.add(line[2])
 
-            """ -----------------------------------------------------------------------------------------------------------
-				|	GOTO OPTIMIZATION 
-				----------------------------------------------------------------------------------------------------------- """
 
-        elif instruction == "GOTO":
-            optimized_tac.append(line)
+    utils.opOpt(optimized_tac)
 
-    write_optimized_file(optimized_tac)
-
-    # SymbolTable.display()
+    SymTable.display()
