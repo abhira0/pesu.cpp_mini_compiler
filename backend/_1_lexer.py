@@ -1,11 +1,12 @@
-import ply.lex as lex
-import _0_tokrules as tokrules
 import json
+
 import ply.lex as lex
 from termcolor import cprint
 
+import _0_tokrules as tokrules
+
 try:
-    file_code = open("../test/for.cpp", "r").read()
+    file_code = open("../test/switch.cpp", "r").read()
 except:
     file_code = open("./test/phase1test1.cpp", "r").read()
 lexer = lex.lex(module=tokrules)
