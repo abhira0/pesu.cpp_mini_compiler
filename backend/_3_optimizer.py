@@ -2,6 +2,7 @@ import json
 import pickle
 import sys
 
+from termcolor import cprint
 from _2_parser import SymbolTable
 
 xpr = {}
@@ -122,7 +123,7 @@ if __name__ == "__main__":
         except:
             ...
         instruction = line[0]  # [op	var1	var2	result] --> Quadruple Format
-        
+
         """ -----------------------------------------------------------------------------------------------------------
             |	NO OPTIMIZATION SECTION
             ----------------------------------------------------------------------------------------------------------- """
@@ -133,11 +134,9 @@ if __name__ == "__main__":
             optimized_tac.append(line)
         elif instruction[0] == "l":
             optimized_tac.append(line)
-            
-        """ -----------------------------------------------------------------------------------------------------------
-            |	ASSIGNMENT OPERATION OPTIMIZATION
-            ----------------------------------------------------------------------------------------------------------- """
-
+            """ -----------------------------------------------------------------------------------------------------------
+                |	ASSIGNMENT OPERATION OPTIMIZATION
+                ----------------------------------------------------------------------------------------------------------- """
         elif instruction == "ASSIGN":  # [	=	var1	(emp)	result	] --> Quadruple Format
             variable = line[3]  # Result field in the quadruple
             value = utils.getVal(line[1], SymTable)
@@ -162,9 +161,9 @@ if __name__ == "__main__":
                 line[1] = utils.updateElement(line[1], updated_val=value)
                 optimized_tac.append(line)
 
-        """ -----------------------------------------------------------------------------------------------------------
-            |	MATHEMATICAL OPERATION OPTIMIZATION  
-            ----------------------------------------------------------------------------------------------------------- """
+            """ -----------------------------------------------------------------------------------------------------------
+                |	MATHEMATICAL OPERATION OPTIMIZATION
+                ----------------------------------------------------------------------------------------------------------- """
 
         elif instruction in ["ADD", "SUB", "MUL", "DIV"]:
             variable = line[3]
@@ -207,9 +206,9 @@ if __name__ == "__main__":
                 line[2] = utils.updateElement(line[2])
                 optimized_tac.append(line)
 
-        """ -----------------------------------------------------------------------------------------------------------
-            |	RELATIONAL OPERATOR OPTIMIZATION
-            ----------------------------------------------------------------------------------------------------------- """
+            """ -----------------------------------------------------------------------------------------------------------
+                |	RELATIONAL OPERATOR OPTIMIZATION
+                ----------------------------------------------------------------------------------------------------------- """
 
         elif instruction in ["LT", "GT", "LE", "GE", "EQ", "NEQ"]:
             # ['LT','GT','LE','GE','EQ','NEQ',]
@@ -228,7 +227,10 @@ if __name__ == "__main__":
             if type(utils.getActualValue(line[2])) == type(""):
                 srcs.add(line[2])
 
-
     utils.opOpt(optimized_tac)
+
+    with open("./optimized-3code", "r") as f:
+        for i in f.readlines():
+            cprint(i, "cyan", end="")
 
     SymTable.display()

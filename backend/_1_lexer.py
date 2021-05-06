@@ -5,12 +5,12 @@ from termcolor import cprint
 
 import _0_tokrules as tokrules
 
+filename = "test/opt_deadcode.cpp"  # C++ source code
+
 try:
-    file_code = open("../test/switch.cpp", "r").read()
+    file_code = open(f"../{filename}", "r").read()
 except:
-    file_code = open("./test/phase1test1.cpp", "r").read()
-lexer = lex.lex(module=tokrules)
-lexer.input(file_code)
+    file_code = open(f"./{filename}", "r").read()
 
 
 def getIfASCII(value_, type_):
@@ -39,6 +39,10 @@ def find_column(input, token):
     last_col = len(token.value) + first_col - 1
     return (first_col, last_col)
 
+
+# Lexer class
+lexer = lex.lex(module=tokrules)
+lexer.input(file_code)
 
 p1_token_json = {"items": []}
 p2_token_json = {"items": []}
