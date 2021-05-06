@@ -1,0 +1,36 @@
+	VAR			i
+	ASSIGN	10		i_0
+	VAR			j
+	ASSIGN	i_0		j_0
+	GOTO			l_comparisons
+l0_0:
+	VAR			i
+	VAR			j
+	MUL	i_0	i_0	t0
+	ASSIGN	t0		j_1
+	MUL	j_2	j_2	t1
+	ASSIGN	t1		j_2
+	GOTO			l_next_switch
+l0_1:
+	VAR			k
+	GOTO			l_next_switch
+l0_2:
+	VAR			z
+	ASSIGN	12		t2
+	ASSIGN	20		t3
+	MUL	t2	t3	t4
+	ASSIGN	t4		z_0
+l0_3:
+	VAR			y
+l0_4:
+	VAR			y
+	GOTO			l_next_switch
+l_comparisons:
+	EQ	0	0	l0_0
+	EQ	0	1	l0_1
+	EQ	0	2	l0_2
+	EQ	0	3	l0_3
+	GOTO			l0_4
+l_next_switch:
+	VAR			k
+	ASSIGN	100		k_0
